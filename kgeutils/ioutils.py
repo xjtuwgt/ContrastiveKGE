@@ -333,6 +333,9 @@ class ArgParser(CommonArgParser):
         self.add_argument('--rand_seed', default=42, type=int, help='Random seed for initialization')
         self.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
 
+        self.add_argument("--n_entities", type=int, default=None, help="number of entities")
+        self.add_argument("--n_relations", type=int, default=None, help="number of relations")
+
         self.add_argument('--learning_rate', default=2e-4, type=float, help='Learning rate')
 
 
@@ -363,3 +366,15 @@ def complete_default_train_parser(args):
     os.makedirs(args.exp_name, exist_ok=True)
     torch.save(args, join(args.exp_name, "training_args.bin"))
     return args
+
+def prepare_save_path(args):
+    if not os.path.exists(args.save_path):
+        os.mkdir(args.save_path)
+
+    folder = '{}_{}_'.format(args.model_name, args.dataset)
+    n = len([x for x in os.listdir(args.save_path) if x.startswith(folder)])
+    folder += str(n)
+    args.save_path = os.path.join(args.save_path, folder)
+
+    if not os.path.exists(args.save_path):
+        os.makedirs(args.save_path)
