@@ -22,6 +22,7 @@ import torch.nn.functional as F
 from figureUtils.plotUtils import distribution_plot
 from time import time
 from tqdm import tqdm
+from kgeutils.utils import seed_everything
 from pytorch_metric_learning.losses import NTXentLoss
 
 
@@ -50,8 +51,7 @@ class ArgParser(CommonArgParser):
         self.add_argument('--residual', default=True, action='store_true', help='whether adding residual connection')
         self.add_argument('--diff_head_tail', default=True, action='store_true', help='whether distinguish head and tail')
         self.add_argument('--layers', default=2, type=int, help='number of GNN layers')
-        self.add_argument('--random_seed', default=42, type=int, help='Random seed for initialization')
-
+        self.add_argument('--rand_seed', default=42, type=int, help='Random seed for initialization')
 
 
 def prepare_save_path(args):
@@ -70,6 +70,7 @@ if __name__ == '__main__':
     args = ArgParser().parse_args()
     for key, value in vars(args).items():
         print("{}:{}".format(key, value))
+    seed_everything(seed=args.rand_seed)
     # args.dataset = 'FB15k-237'
     args.dataset = 'wn18rr'
     # args.dataset = 'FB15k'
@@ -101,6 +102,7 @@ if __name__ == '__main__':
     node_number_in_batchs = []
     sparse_edge_number_in_batchs = []
     dense_edge_number_in_batchs = []
+    loss_in_batchs = []
     for batch_idx, batch in tqdm(enumerate(data_loader)):
         # for key, value in batch.items():
         #     print(key, value)
@@ -112,6 +114,7 @@ if __name__ == '__main__':
 
         batch_g = batch['batch_graph']
         loss, cls_embed = model.forward(batch_g)
+        loss_in_batchs.append(loss.data.item())
         # print(loss)
         # print(cls_embed.shape)
         # x = dgl.unbatch(batch_g)
@@ -134,6 +137,8 @@ if __name__ == '__main__':
 
         # print(len(x))
         # break
-
-    print('tid {}'.format(graph.edata['tid'][0]))
+    print(max(loss_in_batchs))
+    print(min(loss_in_batchs))
+    print(sum(loss_in_batchs)/len(loss_in_batchs))
+    # print('tid {}'.format(graph.edata['tid'][0]))
     print('Run time {}'.format(time() - start_time))
