@@ -4,10 +4,11 @@ from kgeutils.ioutils import ArgParser
 from dglke.dataloader.KGDataloader import train_data_loader
 from dglke.models.ContrastiveKGEmodels import ContrastiveKEModel
 import torch.nn.functional as F
+import sys
 
 from time import time
 from tqdm import tqdm, trange
-from kgeutils.utils import seed_everything, get_linear_schedule_with_warmup
+from kgeutils.utils import seed_everything, get_linear_schedule_with_warmup, json_to_argv
 from kgeutils.gpu_utils import device_setting
 import logging
 
@@ -17,7 +18,14 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message
 logger = logging.getLogger(__name__)
 
 def run():
-    args = ArgParser().parse_args()
+    parser = ArgParser()
+    logger.info("IN CMD MODE")
+    args_config_provided = parser.parse_args(sys.argv[1:])
+    if args_config_provided.config_file is not None:
+        argv = json_to_argv(args_config_provided.config_file) + sys.argv[1:]
+    else:
+        argv = sys.argv[1:]
+    args = parser.parse_args(argv)
     seed_everything(seed=args.rand_seed + args.local_rank)
     # args.dataset = 'FB15k-237'
     args.dataset = 'wn18rr'
@@ -77,7 +85,7 @@ def run():
     train_iterator = trange(start_epoch, start_epoch + int(args.num_train_epochs), desc="Epoch",
                             disable=args.local_rank not in [-1, 0])
     for epoch in train_iterator:
-        epoch_iterator = tqdm(tr_data_loader, desc="Iteration", miniters=200, disable=args.local_rank not in [-1, 0])
+        epoch_iterator = tqdm(tr_data_loader, desc="Iteration", miniters=100, disable=args.local_rank not in [-1, 0])
         for batch_idx, batch in enumerate(epoch_iterator):
             for key, value in batch.items():
                 batch[key] = value.to(device)

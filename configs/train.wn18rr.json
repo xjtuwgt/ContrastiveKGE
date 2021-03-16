@@ -1,0 +1,15 @@
+{
+    "name": "wordnet_contrastive",
+    "num_train_epochs": 100,
+    "graph_batch_size": 32,
+    "gradient_accumulation_steps": 1,
+    "hop_num": 2,
+    "fanouts": "15,10",
+    "ent_dim": 256,
+    "rel_dim": 256,
+    "graph_hid_dim": 256,
+    "head_num": 8,
+    "layers": 2,
+    "attn_drop": 0.3,
+    "feat_drop": 0.2
+}
