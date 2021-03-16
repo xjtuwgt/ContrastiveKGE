@@ -1,13 +1,12 @@
 from dglke.dataloader.KGDataset import get_dataset
-from dglke.dataloader.KGDataloader import TrainDataset
-import os
+import torch
 from kgeutils.ioutils import ArgParser
 from dglke.dataloader.KGDataloader import train_data_loader
 from dglke.models.ContrastiveKGEmodels import ContrastiveKEModel
 import torch.nn.functional as F
 
 from time import time
-from tqdm import tqdm
+from tqdm import tqdm, trange
 from kgeutils.utils import seed_everything
 from kgeutils.gpu_utils import device_setting
 import logging
@@ -28,8 +27,6 @@ def run():
     for key, value in vars(args).items():
         logging.info("{}:{}".format(key, value))
     ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    hop_num = args.hop_num
-    edge_dir = args.edge_dir
     dataset = get_dataset(args.data_path,
                           args.dataset,
                           args.format,
@@ -37,15 +34,11 @@ def run():
                           args.data_files,
                           args.has_edge_importance)
     ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    train_data = TrainDataset(dataset=dataset, hop_num=args.hop_num, add_special=args.add_special,
-                              reverse=args.reverse_r,
-                              has_importance=args.has_edge_importance)
     logging.info('Initial number of entities: {}'.format(dataset.n_entities))
     logging.info('Initial number of relations: {}'.format(dataset.n_relations))
     device = device_setting(args=args)
-    print(device)
     ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    data_loader, n_entities, n_relations = train_data_loader(args=args, dataset=dataset)
+    tr_data_loader, n_entities, n_relations = train_data_loader(args=args, dataset=dataset)
     logging.info('graph based number of entities: {}'.format(n_entities))
     logging.info('graph based number of relations: {}'.format(n_relations))
     args.n_entities = n_entities
@@ -54,17 +47,26 @@ def run():
                                gamma=args.gamma, activation=F.elu, attn_drop=args.attn_drop, feat_drop=args.feat_drop,
                                           head_num=args.head_num, graph_hidden_dim=args.graph_hid_dim,
                                           n_layers=args.layers)
+
     model.to(device)
+    # use optimizer
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+
     start_time = time()
     loss_in_batchs = []
-
-    for batch_idx, batch in tqdm(enumerate(data_loader)):
-        for key, value in batch.items():
-            batch[key] = value.to(device)
-        batch_g = batch['batch_graph']
-        loss, cls_embed = model.forward(batch_g)
-        loss_in_batchs.append(loss.data.item())
-        # break
+    start_epoch = 0
+    train_iterator = trange(start_epoch, start_epoch + int(args.num_train_epochs), desc="Epoch",
+                            disable=args.local_rank not in [-1, 0])
+    for epoch in train_iterator:
+        epoch_iterator = tqdm(tr_data_loader, desc="Iteration", miniters=200, disable=args.local_rank not in [-1, 0])
+        for batch_idx, batch in enumerate(epoch_iterator):
+            for key, value in batch.items():
+                batch[key] = value.to(device)
+            batch_g = batch['batch_graph']
+            loss, cls_embed = model.forward(batch_g)
+            loss_in_batchs.append(loss.data.item())
+            # break
     print(max(loss_in_batchs))
     print(min(loss_in_batchs))
     print(sum(loss_in_batchs)/len(loss_in_batchs))

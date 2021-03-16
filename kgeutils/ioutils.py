@@ -270,10 +270,10 @@ class CommonArgParser(argparse.ArgumentParser):
                           help='We force a synchronization between processes every x steps for'\
                                   'multiprocessing training. This potentially stablizes the training process'
                                   'to get a better performance. For multiprocessing training, it is set to 1000 by default.')
-        self.add_argument('--hidden_dim', type=int, default=400,
-                          help='The embedding size of relation and entity')
-        self.add_argument('--lr', type=float, default=0.01,
-                          help='The learning rate. DGL-KE uses Adagrad to optimize the model parameters.')
+        # self.add_argument('--hidden_dim', type=int, default=400,
+        #                   help='The embedding size of relation and entity')
+        # self.add_argument('--lr', type=float, default=1e-3,
+        #                   help='The learning rate. DGL-KE uses Adagrad to optimize the model parameters.')
         self.add_argument('-g', '--gamma', type=float, default=12.0,
                           help='The margin value in the score function. It is used by TransX and RotatE.')
         self.add_argument('-de', '--double_ent', action='store_true',
@@ -337,6 +337,8 @@ class ArgParser(CommonArgParser):
         self.add_argument("--n_relations", type=int, default=None, help="number of relations")
 
         self.add_argument('--learning_rate', default=2e-4, type=float, help='Learning rate')
+        self.add_argument('--weight-decay', type=float, default=5e-4, help="weight decay")
+        self.add_argument('--num_train_epochs', type=int, default=1, help="number of train epochs")
 
 
 
