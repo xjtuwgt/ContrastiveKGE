@@ -65,7 +65,7 @@ def run():
     args.n_entities = n_entities
     args.n_relations = n_relations
     model = ContrastiveKEModel(n_relations=args.n_relations, n_entities=args.n_entities, ent_dim=args.ent_dim, rel_dim=args.rel_dim,
-                               gamma=args.gamma, activation=F.elu, attn_drop=args.attn_drop, feat_drop=args.feat_drop,
+                               gamma=args.gamma, activation=None, attn_drop=args.attn_drop, feat_drop=args.feat_drop,
                                           head_num=args.head_num, graph_hidden_dim=args.graph_hid_dim,
                                           n_layers=args.layers)
 

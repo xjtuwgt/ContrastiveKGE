@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from dgl.nn.pytorch.utils import Identity
-from dgl.heterograph import DGLHeteroGraph
 import dgl.function as fn
 from dgl.nn.functional import edge_softmax
 from dgl.base import DGLError
@@ -33,7 +32,7 @@ class KGELayer(nn.Module):
                  feat_drop: float=0.1,
                  attn_drop: float=0.1,
                  negative_slope=0.2,
-                 residual=False,
+                 residual=True,
                  activation=None,
                  diff_head_tail=False):
         super(KGELayer, self).__init__()
@@ -60,7 +59,7 @@ class KGELayer(nn.Module):
         self.attn_h = nn.Parameter(torch.FloatTensor(1, self._num_heads, self._head_dim), requires_grad=True)
         self.attn_t = nn.Parameter(torch.FloatTensor(1, self._num_heads, self._head_dim), requires_grad=True)
         self.attn_r = nn.Parameter(torch.FloatTensor(1, self._num_heads, self._head_dim), requires_grad=True)
-        self.leaky_relu = nn.LeakyReLU(negative_slope)
+        self.leaky_relu = nn.LeakyReLU(negative_slope) ### for attention computation
 
         if residual:
             if in_ent_feats != out_ent_feats:
@@ -69,6 +68,13 @@ class KGELayer(nn.Module):
                 self.res_fc_ent = Identity()
         else:
             self.register_buffer('res_fc_ent', None)
+
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        self.graph_layer_norm = nn.LayerNorm(self._num_heads * self._head_dim)
+        self.ff_layer_norm = nn.LayerNorm(self._num_heads * self._head_dim)
+        self.feed_forward_layer = PositionwiseFeedForward(model_dim=self._num_heads * self._head_dim,
+                                                          d_hidden=4 * self._num_heads * self._head_dim)
+        # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         self.reset_parameters()
         self.activation = activation
 
@@ -132,10 +138,16 @@ class KGELayer(nn.Module):
             if self.res_fc_ent is not None:
                 resval = self.res_fc_ent(feat_tail).view(feat_tail.shape[0], -1, self._head_dim)
                 rst = rst + resval
+            rst = rst.flatten(1)
+            # +++++++++++++++++++++++++++++++++++++++
+            rst = self.graph_layer_norm(rst)
+            ff_rst = self.feed_forward_layer(rst)
+            ff_rst = self.feat_drop(ff_rst) + rst
+            rst = self.ff_layer_norm(ff_rst)
+            # +++++++++++++++++++++++++++++++++++++++
             # activation
             if self.activation:
                 rst = self.activation(rst)
-            rst = rst.flatten(1)
             if get_attention:
                 return rst, graph.edata['a']
             else:
