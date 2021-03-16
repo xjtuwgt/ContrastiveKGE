@@ -38,7 +38,7 @@ class ArgParser(CommonArgParser):
                                   'The positive score will be adjusted '\
                                   'as pos_score = pos_score * edge_importance')
         self.add_argument('--add_special', default=True, action='store_true', help='adding special entity/relation')
-        self.add_argument('--fanouts', default='10,5', type=str, help='fanout, 1-hop number of sample neighbors, 2-hop, 3-hop')
+        self.add_argument('--fanouts', default='15,10', type=str, help='fanout, 1-hop number of sample neighbors, 2-hop, 3-hop')
         self.add_argument('--reverse_r', default=True, action='store_true', help='adding special entity/relation')
         self.add_argument('--ent_dim', type=int, default=256, help='kg embedding dimension')
         self.add_argument('--rel_dim', type=int, default=256, help='kg embedding dimension')
@@ -70,8 +70,8 @@ if __name__ == '__main__':
     args = ArgParser().parse_args()
     for key, value in vars(args).items():
         print("{}:{}".format(key, value))
-    args.dataset = 'FB15k-237'
-    # args.dataset = 'wn18rr'
+    # args.dataset = 'FB15k-237'
+    args.dataset = 'wn18rr'
     # args.dataset = 'FB15k'
     # args.dataset = 'wn18'
 
