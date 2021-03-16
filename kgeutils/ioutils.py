@@ -338,7 +338,10 @@ class ArgParser(CommonArgParser):
 
         self.add_argument('--learning_rate', default=2e-4, type=float, help='Learning rate')
         self.add_argument('--weight-decay', type=float, default=5e-4, help="weight decay")
-        self.add_argument('--num_train_epochs', type=int, default=1, help="number of train epochs")
+        self.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
+        self.add_argument('--num_train_epochs', type=int, default=10, help="number of train epochs")
+
+        self.add_argument('--eval_interval_ratio', default=0.1, type=float, help='Evaluation interval ratio')
 
 
 

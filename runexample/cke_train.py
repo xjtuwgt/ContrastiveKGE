@@ -41,6 +41,12 @@ def run():
     tr_data_loader, n_entities, n_relations = train_data_loader(args=args, dataset=dataset)
     logging.info('graph based number of entities: {}'.format(n_entities))
     logging.info('graph based number of relations: {}'.format(n_relations))
+    ###++++++++++++++++++++++++++++++++++++++++++
+    total_batch_num = len(tr_data_loader)
+    logger.info('Total number of batches = {}'.format(total_batch_num))
+    eval_batch_interval_num = int(total_batch_num * args.eval_interval_ratio) + 1
+    logger.info('Evaluate the model by = {} batches'.format(eval_batch_interval_num))
+    ###++++++++++++++++++++++++++++++++++++++++++
     args.n_entities = n_entities
     args.n_relations = n_relations
     model = ContrastiveKEModel(n_relations=args.n_relations, n_entities=args.n_entities, ent_dim=args.ent_dim, rel_dim=args.rel_dim,
@@ -49,6 +55,7 @@ def run():
                                           n_layers=args.layers)
 
     model.to(device)
+    model.zero_grad()
     # use optimizer
     optimizer = torch.optim.Adam(
         model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
@@ -63,10 +70,22 @@ def run():
         for batch_idx, batch in enumerate(epoch_iterator):
             for key, value in batch.items():
                 batch[key] = value.to(device)
+            model.train()
             batch_g = batch['batch_graph']
             loss, cls_embed = model.forward(batch_g)
             loss_in_batchs.append(loss.data.item())
+            del batch
             # break
+            optimizer.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+
+            optimizer.step()
+            model.zero_grad()
+            if (batch_idx + 1) % eval_batch_interval_num == 0:
+                logging.info("Epoch {:05d} | Step {:05d} | Time(s) {:.4f} | Loss {:.4f}"
+                             .format(epoch + 1, batch_idx +1, time() - start_time, loss.item()))
+
     print(max(loss_in_batchs))
     print(min(loss_in_batchs))
     print(sum(loss_in_batchs)/len(loss_in_batchs))
