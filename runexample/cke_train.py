@@ -103,7 +103,7 @@ def run():
             scheduler.step()
             model.zero_grad()
             if (batch_idx + 1) % eval_batch_interval_num == 0:
-                logging.info("\nEpoch {:05d} | Step {:05d} | Time(s) {:.4f} | Loss {:.4f}"
+                logging.info("Epoch {:05d} | Step {:05d} | Time(s) {:.4f} | Loss {:.4f}"
                              .format(epoch + 1, batch_idx +1, time() - start_time, loss.item()))
     # print('tid {}'.format(graph.edata['tid'][0]))
     print('Run time {}'.format(time() - start_time))
