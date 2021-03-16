@@ -295,3 +295,35 @@ class CommonArgParser(argparse.ArgumentParser):
                           help='The loss function used to train KGEM.')
         self.add_argument('-m', '--margin', type=float, default=1.0,
                           help='hyper-parameter for hinge loss.')
+
+
+class ArgParser(CommonArgParser):
+    def __init__(self):
+        super(ArgParser, self).__init__()
+
+        self.add_argument('--hop_num', type=int, default=2, help='hop_number to generate the sub-graph')
+        self.add_argument('--edge_dir', type=str, default='all', help='edge direction to generate the sub-graphs')
+        self.add_argument('--graph_batch_size', type=int, default=8, help='batch size for contrastive learning')
+        self.add_argument('--cpu_num', type=int, default=8, help='number of cpus for data loader')
+        self.add_argument('--has_edge_importance', action='store_true',
+                          help='Allow providing edge importance score for each edge during training.'\
+                                  'The positive score will be adjusted '\
+                                  'as pos_score = pos_score * edge_importance')
+        self.add_argument('--add_special', default=True, action='store_true', help='adding special entity/relation')
+        self.add_argument('--fanouts', default='15,10', type=str, help='fanout, 1-hop number of sample neighbors, 2-hop, 3-hop')
+        self.add_argument('--reverse_r', default=True, action='store_true', help='adding special entity/relation')
+        self.add_argument('--ent_dim', type=int, default=512, help='kg embedding dimension')
+        self.add_argument('--rel_dim', type=int, default=512, help='kg embedding dimension')
+        self.add_argument('--graph_hid_dim', type=int, default=512, help='graph hidden dimension')
+        self.add_argument('--head_num', type=int, default=4, help='head number of GNNs')
+        self.add_argument('--attn_drop', type=float, default=0.25, help='attention dropout for GNN')
+        self.add_argument('--feat_drop', type=float, default=0.25, help='feature dropout for GNN')
+        self.add_argument('--negative_slope', type=float, default=0.4, help='negative slope for elu activation function')
+        self.add_argument('--residual', default=True, action='store_true', help='whether adding residual connection')
+        self.add_argument('--diff_head_tail', default=True, action='store_true', help='whether distinguish head and tail')
+        self.add_argument('--layers', default=2, type=int, help='number of GNN layers')
+        self.add_argument('--cuda', default=False, action='store_true', help='use GPU')
+        self.add_argument('--num_gpu', default=-1, type=int, help='use GPU')
+        self.add_argument("--gpu", type=int, default=-1,
+                            help="which GPU to use. Set -1 to use CPU.")
+        self.add_argument('--rand_seed', default=42, type=int, help='Random seed for initialization')
