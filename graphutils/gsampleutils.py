@@ -191,10 +191,10 @@ class SubGraphPairDataset(Dataset):
         anchor_sub_ids = torch.cat([_[2] for _ in data], dim=0)
         batch_graphs = dgl.batch(list(itertools.chain.from_iterable([(_[3], _[4]) for _ in data])))
 
-        number_of_nodes = sum([_[3].number_of_nodes() for _ in data])
-        sparse_number_of_edges = sum([_[3].number_of_edges() for _ in data])
+        number_of_nodes = torch.LongTensor([sum([_[3].number_of_nodes() for _ in data])])[0]
+        sparse_number_of_edges = torch.LongTensor([sum([_[3].number_of_edges() for _ in data])])[0]
         dense_number_of_edges = sum([_[4].number_of_edges() for _ in data])
-        edge_number = sparse_number_of_edges + dense_number_of_edges
+        edge_number = torch.LongTensor([sparse_number_of_edges + dense_number_of_edges])[0]
         batch = {'anchor': anchor_nodes, 'cls': cls_sub_ids, 'anchor_sub': anchor_sub_ids,
                  'node_number': number_of_nodes, 'edge_number': edge_number, 'batch_graph': batch_graphs}
         return batch

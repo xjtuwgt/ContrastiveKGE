@@ -331,6 +331,7 @@ class ArgParser(CommonArgParser):
         self.add_argument("--gpu_id", default=None, type=str, help="GPU id")
         self.add_argument("--exp_name", type=str, default=None, help="If set, this will be used as directory name in OUTOUT folder")
         self.add_argument('--rand_seed', default=42, type=int, help='Random seed for initialization')
+        self.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
 
         self.add_argument('--learning_rate', default=2e-4, type=float, help='Learning rate')
 

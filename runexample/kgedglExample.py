@@ -52,19 +52,22 @@ if __name__ == '__main__':
 
     print(dataset.n_entities)
     device = device_setting(args=args)
+    print(device)
     data_loader, n_entities, n_relations = train_data_loader(args=args, dataset=dataset)
     model = ContrastiveKEModel(n_relations=n_relations, n_entities=n_entities, ent_dim=args.ent_dim, rel_dim=args.rel_dim,
                                gamma=args.gamma, activation=F.elu, attn_drop=args.attn_drop, feat_drop=args.feat_drop,
                                           head_num=args.head_num, graph_hidden_dim=args.graph_hid_dim,
                                           n_layers=args.layers)
+    model.to(device)
     start_time = time()
     node_number_in_batchs = []
     sparse_edge_number_in_batchs = []
     dense_edge_number_in_batchs = []
     loss_in_batchs = []
+
     for batch_idx, batch in tqdm(enumerate(data_loader)):
         for key, value in batch.items():
-            batch[key] = value.to(args.device)
+            batch[key] = value.to(device)
         # for key, value in batch.items():
         #     print(key, value)
         anchor = batch['anchor']
