@@ -22,7 +22,9 @@ import os
 import csv
 import argparse
 import json
+from os.path import join
 import numpy as np
+import torch
 from envs import KG_DATASET_FOLDER, OUTPUT_FOLDER
 
 def get_compatible_batch_size(batch_size, neg_sample_size):
@@ -323,7 +325,40 @@ class ArgParser(CommonArgParser):
         self.add_argument('--diff_head_tail', default=True, action='store_true', help='whether distinguish head and tail')
         self.add_argument('--layers', default=2, type=int, help='number of GNN layers')
         self.add_argument('--cuda', default=False, action='store_true', help='use GPU')
-        self.add_argument('--num_gpu', default=-1, type=int, help='use GPU')
+        self.add_argument('--gpus', default=-1, type=int, help='use GPU')
         self.add_argument("--gpu", type=int, default=-1,
                             help="which GPU to use. Set -1 to use CPU.")
+        self.add_argument("--gpu_id", default=None, type=str, help="GPU id")
+        self.add_argument("--exp_name", type=str, default=None, help="If set, this will be used as directory name in OUTOUT folder")
         self.add_argument('--rand_seed', default=42, type=int, help='Random seed for initialization')
+
+        self.add_argument('--learning_rate', default=2e-4, type=float, help='Learning rate')
+
+
+
+def complete_default_train_parser(args):
+    if args.gpu_id:
+        os.environ["CUDA_VISIBLE_DEVICES"] = str(args.gpu_id)
+
+    # set n_gpu
+    if args.local_rank == -1:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if args.data_parallel:
+            args.gpus = torch.cuda.device_count()
+        else:
+            args.gpus = 1
+    else:
+        torch.cuda.set_device(args.local_rank)
+        device = torch.device("cuda", args.local_rank)
+        torch.distributed.init_process_group(backend="nccl")
+        args.gpus = 1
+    args.device = device
+
+    # output dir name
+    if not args.exp_name:
+        args.exp_name = '_'.join(['lr' + str(args.learning_rate),
+                          'bs' + str(args.graph_batch_size)])
+    args.exp_name = join(args.output_dir, args.exp_name)
+    os.makedirs(args.exp_name, exist_ok=True)
+    torch.save(args, join(args.exp_name, "training_args.bin"))
+    return args

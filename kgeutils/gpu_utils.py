@@ -49,3 +49,19 @@ def gpu_setting(num_gpu=1):
         return multi_free_cuda()
     else:
         return single_free_cuda()
+
+def device_setting(args):
+    if torch.cuda.is_available():
+        free_gpu_ids, used_memory = gpu_setting(num_gpu=args.gpus)
+        print('{} gpus with used memory = {}, gpu ids = {}'.format(len(free_gpu_ids), used_memory, free_gpu_ids))
+        if args.gpus > 0:
+            gpu_ids = free_gpu_ids
+            device = torch.device("cuda:%d" % gpu_ids[0])
+            print('Single GPU setting')
+        else:
+            device = torch.device("cpu")
+            print('Single cpu setting')
+    else:
+        device = torch.device("cpu")
+        print('Single cpu setting')
+    return device

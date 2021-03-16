@@ -9,9 +9,7 @@ import torch.nn.functional as F
 from time import time
 from tqdm import tqdm
 from kgeutils.utils import seed_everything
-
-
-
+from kgeutils.gpu_utils import device_setting
 
 
 def prepare_save_path(args):
@@ -32,9 +30,9 @@ if __name__ == '__main__':
         print("{}:{}".format(key, value))
     seed_everything(seed=args.rand_seed)
     # args.dataset = 'FB15k-237'
-    args.dataset = 'wn18rr'
+    # args.dataset = 'wn18rr'
     # args.dataset = 'FB15k'
-    # args.dataset = 'wn18'
+    args.dataset = 'wn18'
 
     # hop_num = 4
     # hop_num = 2
@@ -53,6 +51,7 @@ if __name__ == '__main__':
     graph = train_data.g
 
     print(dataset.n_entities)
+    device = device_setting(args=args)
     data_loader, n_entities, n_relations = train_data_loader(args=args, dataset=dataset)
     model = ContrastiveKEModel(n_relations=n_relations, n_entities=n_entities, ent_dim=args.ent_dim, rel_dim=args.rel_dim,
                                gamma=args.gamma, activation=F.elu, attn_drop=args.attn_drop, feat_drop=args.feat_drop,
@@ -64,6 +63,8 @@ if __name__ == '__main__':
     dense_edge_number_in_batchs = []
     loss_in_batchs = []
     for batch_idx, batch in tqdm(enumerate(data_loader)):
+        for key, value in batch.items():
+            batch[key] = value.to(args.device)
         # for key, value in batch.items():
         #     print(key, value)
         anchor = batch['anchor']
