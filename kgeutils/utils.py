@@ -1,6 +1,6 @@
 import random
 import os
-
+import json
 import numpy as np
 import torch
 import dgl
@@ -20,6 +20,18 @@ def seed_everything(seed: int) -> int:
     dgl.random.seed(seed)
     return seed
 
+def json_to_argv(json_file):
+    j = json.load(open(json_file))
+    argv = []
+    for k, v in j.items():
+        new_v = str(v) if v is not None else None
+        argv.extend(['--' + k, new_v])
+    return argv
+
+def boolean_string(s):
+    if s.lower() not in {'false', 'true'}:
+        raise ValueError('Not a valid boolean string')
+    return s.lower() == 'true'
 
 def get_linear_schedule_with_warmup(optimizer, num_warmup_steps, num_training_steps, last_epoch=-1):
     """ Create a schedule with a learning rate that decreases linearly after

@@ -304,7 +304,10 @@ class ArgParser(CommonArgParser):
         super(ArgParser, self).__init__()
 
         self.add_argument('--hop_num', type=int, default=2, help='hop_number to generate the sub-graph')
+        self.add_argument('--fanouts', default='15,10', type=str,
+                          help='fanout, 1-hop number of sample neighbors, 2-hop, 3-hop')
         self.add_argument('--edge_dir', type=str, default='all', help='edge direction to generate the sub-graphs')
+
         self.add_argument('--graph_batch_size', type=int, default=32, help='batch size for contrastive learning')
         self.add_argument('--cpu_num', type=int, default=8, help='number of cpus for data loader')
         self.add_argument('--has_edge_importance', action='store_true',
@@ -312,7 +315,6 @@ class ArgParser(CommonArgParser):
                                   'The positive score will be adjusted '\
                                   'as pos_score = pos_score * edge_importance')
         self.add_argument('--add_special', default=True, action='store_true', help='adding special entity/relation')
-        self.add_argument('--fanouts', default='15,10', type=str, help='fanout, 1-hop number of sample neighbors, 2-hop, 3-hop')
         self.add_argument('--reverse_r', default=True, action='store_true', help='adding special entity/relation')
         self.add_argument('--ent_dim', type=int, default=128, help='kg embedding dimension')
         self.add_argument('--rel_dim', type=int, default=128, help='kg embedding dimension')
@@ -329,9 +331,13 @@ class ArgParser(CommonArgParser):
         self.add_argument("--gpu", type=int, default=-1,
                             help="which GPU to use. Set -1 to use CPU.")
         self.add_argument("--gpu_id", default=None, type=str, help="GPU id")
-        self.add_argument("--exp_name", type=str, default=None, help="If set, this will be used as directory name in OUTOUT folder")
+
         self.add_argument('--rand_seed', default=42, type=int, help='Random seed for initialization')
         self.add_argument("--local_rank", type=int, default=-1, help="For distributed training: local_rank")
+
+        self.add_argument("--config_file", type=str, default=None, help="configuration file for command parser")
+        self.add_argument("--exp_name", type=str, default=None,
+                          help="If set, this will be used as directory name in OUTOUT folder")
 
         self.add_argument("--n_entities", type=int, default=None, help="number of entities")
         self.add_argument("--n_relations", type=int, default=None, help="number of relations")
