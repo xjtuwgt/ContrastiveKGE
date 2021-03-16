@@ -21,9 +21,9 @@ def run():
     args = ArgParser().parse_args()
     seed_everything(seed=args.rand_seed + args.local_rank)
     # args.dataset = 'FB15k-237'
-    # args.dataset = 'wn18rr'
+    args.dataset = 'wn18rr'
     # args.dataset = 'FB15k'
-    args.dataset = 'wn18'
+    # args.dataset = 'wn18'
 
     for key, value in vars(args).items():
         logging.info("{}:{}".format(key, value))
