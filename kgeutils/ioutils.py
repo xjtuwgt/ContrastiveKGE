@@ -305,7 +305,7 @@ class ArgParser(CommonArgParser):
 
         self.add_argument('--hop_num', type=int, default=2, help='hop_number to generate the sub-graph')
         self.add_argument('--edge_dir', type=str, default='all', help='edge direction to generate the sub-graphs')
-        self.add_argument('--graph_batch_size', type=int, default=8, help='batch size for contrastive learning')
+        self.add_argument('--graph_batch_size', type=int, default=32, help='batch size for contrastive learning')
         self.add_argument('--cpu_num', type=int, default=8, help='number of cpus for data loader')
         self.add_argument('--has_edge_importance', action='store_true',
                           help='Allow providing edge importance score for each edge during training.'\
@@ -339,7 +339,10 @@ class ArgParser(CommonArgParser):
         self.add_argument('--learning_rate', default=2e-4, type=float, help='Learning rate')
         self.add_argument('--weight-decay', type=float, default=5e-4, help="weight decay")
         self.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
-        self.add_argument('--num_train_epochs', type=int, default=10, help="number of train epochs")
+        self.add_argument('--num_train_epochs', type=int, default=100, help="number of train epochs")
+        self.add_argument('--max_steps', type=int, default=-1, help="number of training steps")
+        self.add_argument('--warmup_steps', type=int, default=0, help="warm up steps")
+        self.add_argument('--gradient_accumulation_steps', type=int, default=1, help="gradient_accumulation_steps")
 
         self.add_argument('--eval_interval_ratio', default=0.1, type=float, help='Evaluation interval ratio')
 

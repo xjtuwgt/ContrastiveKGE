@@ -7,7 +7,7 @@ import torch.nn.functional as F
 
 from time import time
 from tqdm import tqdm, trange
-from kgeutils.utils import seed_everything
+from kgeutils.utils import seed_everything, get_linear_schedule_with_warmup
 from kgeutils.gpu_utils import device_setting
 import logging
 
@@ -47,6 +47,13 @@ def run():
     eval_batch_interval_num = int(total_batch_num * args.eval_interval_ratio) + 1
     logger.info('Evaluate the model by = {} batches'.format(eval_batch_interval_num))
     ###++++++++++++++++++++++++++++++++++++++++++
+    if args.max_steps > 0:
+        t_total = args.max_steps
+        args.num_train_epochs = args.max_steps // (len(tr_data_loader) // args.gradient_accumulation_steps) + 1
+    else:
+        t_total = len(tr_data_loader) // args.gradient_accumulation_steps * args.num_train_epochs
+    logger.info('Total training steps = {}'.format(t_total))
+    ###++++++++++++++++++++++++++++++++++++++++++
     args.n_entities = n_entities
     args.n_relations = n_relations
     model = ContrastiveKEModel(n_relations=args.n_relations, n_entities=args.n_entities, ent_dim=args.ent_dim, rel_dim=args.rel_dim,
@@ -59,6 +66,10 @@ def run():
     # use optimizer
     optimizer = torch.optim.Adam(
         model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+    # use scheduler
+    scheduler = get_linear_schedule_with_warmup(optimizer,
+                                                num_warmup_steps=args.warmup_steps,
+                                                num_training_steps=t_total)
 
     start_time = time()
     loss_in_batchs = []
@@ -81,13 +92,10 @@ def run():
             torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
             optimizer.step()
+            scheduler.step()
             model.zero_grad()
             if (batch_idx + 1) % eval_batch_interval_num == 0:
-                logging.info("Epoch {:05d} | Step {:05d} | Time(s) {:.4f} | Loss {:.4f}"
+                logging.info("\nEpoch {:05d} | Step {:05d} | Time(s) {:.4f} | Loss {:.4f}"
                              .format(epoch + 1, batch_idx +1, time() - start_time, loss.item()))
-
-    print(max(loss_in_batchs))
-    print(min(loss_in_batchs))
-    print(sum(loss_in_batchs)/len(loss_in_batchs))
     # print('tid {}'.format(graph.edata['tid'][0]))
     print('Run time {}'.format(time() - start_time))
