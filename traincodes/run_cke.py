@@ -4,6 +4,7 @@ from kgeutils.ioutils import ArgParser
 from dglke.dataloader.KGDataloader import train_data_loader
 from dglke.models.ContrastiveKGEmodels import ContrastiveKEModel
 import sys
+import os
 
 from time import time
 from tqdm import tqdm, trange
@@ -30,6 +31,9 @@ def run():
 
     for key, value in vars(args).items():
         logging.info("{}:{}".format(key, value))
+    ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    if args.data_path and not os.path.exists(args.data_path):
+        os.makedirs(args.data_path)
     ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     dataset = get_dataset(args.data_path,
                           args.dataset,
