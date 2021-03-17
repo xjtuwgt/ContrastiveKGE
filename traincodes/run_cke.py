@@ -5,6 +5,7 @@ from dglke.dataloader.KGDataloader import train_data_loader
 from dglke.models.ContrastiveKGEmodels import ContrastiveKEModel
 import sys
 import os
+from os.path import join
 
 from time import time
 from tqdm import tqdm, trange
@@ -34,6 +35,8 @@ def run():
     ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     if args.data_path and not os.path.exists(args.data_path):
         os.makedirs(args.data_path)
+    if args.save_path and not os.path.exists(args.save_path):
+        os.makedirs(args.save_path)
     ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     dataset = get_dataset(args.data_path,
                           args.dataset,
@@ -68,6 +71,11 @@ def run():
                                gamma=args.gamma, activation=None, attn_drop=args.attn_drop, feat_drop=args.feat_drop,
                                           head_num=args.head_num, graph_hidden_dim=args.graph_hid_dim,
                                           n_layers=args.layers)
+
+    logging.info('Model Parameter Configuration:')
+    for name, param in model.named_parameters():
+        logging.info('Parameter {}: {}, require_grad = {}'.format(name, str(param.size()), str(param.requires_grad)))
+    logging.info('*' * 75)
 
     model.to(device)
     model.zero_grad()
@@ -106,4 +114,7 @@ def run():
                 logging.info("Epoch {:05d} | Step {:05d} | Time(s) {:.4f} | Loss {:.4f}"
                              .format(epoch + 1, batch_idx +1, time() - start_time, loss.item()))
     # print('tid {}'.format(graph.edata['tid'][0]))
+    torch.save({k: v.cpu() for k, v in model.state_dict().items()},
+               join(args.exp_name, f'model.pkl'))
+
     print('Run time {}'.format(time() - start_time))
