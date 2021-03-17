@@ -3,7 +3,6 @@ import torch
 from kgeutils.ioutils import ArgParser
 from dglke.dataloader.KGDataloader import train_data_loader
 from dglke.models.ContrastiveKGEmodels import ContrastiveKEModel
-import torch.nn.functional as F
 import sys
 
 from time import time
@@ -27,10 +26,7 @@ def run():
         argv = sys.argv[1:]
     args = parser.parse_args(argv)
     seed_everything(seed=args.rand_seed + args.local_rank)
-    # args.dataset = 'FB15k-237'
-    args.dataset = 'wn18rr'
-    # args.dataset = 'FB15k'
-    # args.dataset = 'wn18'
+
 
     for key, value in vars(args).items():
         logging.info("{}:{}".format(key, value))
