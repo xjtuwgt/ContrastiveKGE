@@ -313,6 +313,7 @@ class ArgParser(CommonArgParser):
         self.add_argument('--edge_dir', type=str, default='all', help='edge direction to generate the sub-graphs')
 
         self.add_argument('--graph_batch_size', type=int, default=32, help='batch size for contrastive learning')
+        self.add_argument('--dev_graph_batch_size', type=int, default=1, help='batch size for contrastive learning')
         self.add_argument('--cpu_num', type=int, default=8, help='number of cpus for data loader')
         self.add_argument('--has_edge_importance', action='store_true',
                           help='Allow providing edge importance score for each edge during training.'\

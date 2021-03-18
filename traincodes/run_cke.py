@@ -1,7 +1,7 @@
 from dglke.dataloader.KGDataset import get_dataset
 import torch
 from kgeutils.ioutils import ArgParser
-from dglke.dataloader.KGDataloader import train_data_loader
+from dglke.dataloader.KGDataloader import train_data_loader, develop_data_loader
 from dglke.models.ContrastiveKGEmodels import ContrastiveKEModel
 import sys
 import os
@@ -18,7 +18,7 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def run():
+def train_run():
     parser = ArgParser()
     logger.info("IN CMD MODE")
     args_config_provided = parser.parse_args(sys.argv[1:])
@@ -117,4 +117,45 @@ def run():
     torch.save({k: v.cpu() for k, v in model.state_dict().items()},
                join(args.exp_name, f'model.pkl'))
 
+    print('Run time {}'.format(time() - start_time))
+
+
+def infer_run():
+    parser = ArgParser()
+    logger.info("IN CMD MODE")
+    args_config_provided = parser.parse_args(sys.argv[1:])
+    if args_config_provided.config_file is not None:
+        argv = json_to_argv(args_config_provided.config_file) + sys.argv[1:]
+    else:
+        argv = sys.argv[1:]
+    args = parser.parse_args(argv)
+    seed_everything(seed=args.rand_seed + args.local_rank)
+
+    for key, value in vars(args).items():
+        logging.info("{}:{}".format(key, value))
+    ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    if args.data_path and not os.path.exists(args.data_path):
+        os.makedirs(args.data_path)
+    if args.save_path and not os.path.exists(args.save_path):
+        os.makedirs(args.save_path)
+    ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    dataset = get_dataset(args.data_path,
+                          args.dataset,
+                          args.format,
+                          args.delimiter,
+                          args.data_files,
+                          args.has_edge_importance)
+    ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    logging.info('Initial number of entities: {}'.format(dataset.n_entities))
+    logging.info('Initial number of relations: {}'.format(dataset.n_relations))
+    device = device_setting(args=args)
+    ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    dev_data_loader, n_entities, n_relations = develop_data_loader(args=args, dataset=dataset)
+    logging.info('graph based number of entities: {}'.format(n_entities))
+    logging.info('graph based number of relations: {}'.format(n_relations))
+    ###++++++++++++++++++++++++++++++++++++++++++
+    start_time = time()
+    epoch_iterator = tqdm(dev_data_loader, desc="Iteration", miniters=100, disable=args.local_rank not in [-1, 0])
+    for batch_idx, batch in enumerate(epoch_iterator):
+        x = batch['anchor']
     print('Run time {}'.format(time() - start_time))

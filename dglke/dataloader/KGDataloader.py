@@ -3,7 +3,7 @@ import numpy as np
 import scipy as sp
 import dgl.backend as F
 from dglke.dataloader.KGutils import SoftRelationPartition, RandomPartition, ConstructGraph
-from graphutils.gsampleutils import SubGraphPairDataset
+from graphutils.gsampleutils import SubGraphPairDataset, SubGraphDataset
 from torch.utils.data import DataLoader
 
 class UniformNegativeSampler(object):
@@ -125,5 +125,23 @@ def train_data_loader(args, dataset):
                              shuffle=True,
                              drop_last=True,
                              collate_fn=SubGraphPairDataset.collate_fn, num_workers=args.cpu_num)
+    n_entities, n_relations = train_data.n_entities, train_data.n_relations
+    return data_loader, n_entities, n_relations
+
+def develop_data_loader(args, dataset):
+    assert args.hop_num > 0
+    fanouts = [-1] * args.hop_num
+    train_data = TrainDataset(dataset=dataset, hop_num=args.hop_num, add_special=args.add_special,
+                              reverse=args.reverse_r,
+                              has_importance=args.has_edge_importance)
+    sub_graph_data = SubGraphDataset(g=train_data.g, nentity=train_data.n_entities,
+                                              nrelation=train_data.n_relations,
+                                              fanouts=fanouts, special_entity2id=train_data.special_entity_dict,
+                                              special_relation2id=train_data.special_relation_dict,
+                                              edge_dir=args.edge_dir)
+    data_loader = DataLoader(dataset=sub_graph_data, batch_size=args.dev_graph_batch_size,
+                             shuffle=False,
+                             drop_last=True,
+                             collate_fn=SubGraphDataset.collate_fn, num_workers=args.cpu_num)
     n_entities, n_relations = train_data.n_entities, train_data.n_relations
     return data_loader, n_entities, n_relations
