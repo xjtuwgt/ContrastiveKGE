@@ -316,7 +316,7 @@ def ConstructGraph(edges, n_entities, n_relations, hop_num, add_special=False, h
     if add_special:
         special_entity_dict['cls'] = n_entities ## for graph-level representation learning
         special_entity_dict['mask'] = n_entities + 1 ## for node mask
-        g.add_nodes(2) ### add such 'cls' token as a new entity
+        g.add_nodes(2) ### add such 'cls' token as a new mask entity++++ adding two more nodes
         for hop in range(hop_num):
             special_relation_dict['hop_{}'.format(hop + 1)] = n_relations + (2 * hop)
             if reverse:
