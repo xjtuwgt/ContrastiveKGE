@@ -158,4 +158,5 @@ def infer_run():
     epoch_iterator = tqdm(dev_data_loader, desc="Iteration", miniters=100, disable=args.local_rank not in [-1, 0])
     for batch_idx, batch in enumerate(epoch_iterator):
         x = batch['anchor']
+        print(batch['node_number'])
     print('Run time {}'.format(time() - start_time))
