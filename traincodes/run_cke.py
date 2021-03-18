@@ -154,15 +154,15 @@ def infer_run():
     logging.info('graph based number of entities: {}'.format(n_entities))
     logging.info('graph based number of relations: {}'.format(n_relations))
     ###++++++++++++++++++++++++++++++++++++++++++
-    # start_time = time()
-    # epoch_iterator = tqdm(dev_data_loader, desc="Iteration", miniters=100, disable=args.local_rank not in [-1, 0])
-    # for batch_idx, batch in enumerate(epoch_iterator):
-    #     x = batch['anchor']
-    #     # print(batch['node_number'])
-    #     if batch['node_number'] == 1:
-    #         print(batch['batch_graph'])
-    #         print(batch['anchor'])
-    #         print(batch['cls'])
-    #         print(batch['batch_graph'].number_of_nodes())
-    #         print(batch['node_number'])
-    # print('Run time {}'.format(time() - start_time))
+    start_time = time()
+    epoch_iterator = tqdm(dev_data_loader, desc="Iteration", miniters=100, disable=args.local_rank not in [-1, 0])
+    for batch_idx, batch in enumerate(epoch_iterator):
+        x = batch['anchor']
+        # print(batch['node_number'])
+        if batch['node_number'] == 1:
+            print(batch['batch_graph'])
+            print(batch['anchor'])
+            print(batch['cls'])
+            print(batch['batch_graph'].number_of_nodes())
+            print(batch['node_number'])
+    print('Run time {}'.format(time() - start_time))

@@ -44,8 +44,8 @@ class TrainDataset(object):
         self.g, self.special_entity_dict, self.special_relation_dict = \
             ConstructGraph(edges=triples, n_entities=dataset.n_entities, n_relations=dataset.n_relations, reverse=reverse,
                                 has_edge_importance=has_importance, add_special=add_special, hop_num=hop_num)
-        print(dataset.n_entities)
-        print(self.g.number_of_nodes())
+        # print(dataset.n_entities)
+        # print(self.g.number_of_nodes())
         self.n_relations = self.n_relations + len(self.special_relation_dict)
         self.n_entities = self.n_entities + len(self.special_entity_dict)
 

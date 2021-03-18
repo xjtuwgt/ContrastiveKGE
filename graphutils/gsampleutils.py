@@ -144,7 +144,12 @@ class SubGraphPairDataset(Dataset):
         self.fanouts = fanouts
         self.hop_num = len(fanouts)
         self.g = g
-        self.len = g.number_of_nodes()
+        #####################
+        if len(special_entity2id) > 0:
+            self.len = g.number_of_nodes() - len(special_entity2id)  ## no need to extract sub-graph of special entities
+        else:
+            self.len = g.number_of_nodes()
+        #####################
         self.nentity = nentity
         self.nrelation = nrelation
         self.reverse = reverse
@@ -208,7 +213,12 @@ class SubGraphDataset(Dataset):
         self.fanouts = fanouts
         self.hop_num = len(fanouts)
         self.g = g
-        self.len = g.number_of_nodes()
+        #####################
+        if len(special_entity2id) > 0:
+            self.len = g.number_of_nodes() - len(special_entity2id) ## no need to extract sub-graph of special entities
+        else:
+            self.len = g.number_of_nodes()
+        #####################
         self.nentity = nentity
         self.nrelation = nrelation
         self.reverse = reverse
