@@ -6,6 +6,9 @@ import torch
 import dgl
 from torch.utils.data import Dataset
 from copy import deepcopy
+import dgl.backend as F
+import numpy as np
+import scipy as sp
 
 def direct_sub_graph(anchor_node_ids, cls_node_ids, fanouts, g, edge_dir):
     """
@@ -18,6 +21,7 @@ def direct_sub_graph(anchor_node_ids, cls_node_ids, fanouts, g, edge_dir):
     """
     neighbors_dict = {'anchor': anchor_node_ids}
     neighbors_dict['cls'] = cls_node_ids
+    edge_dict = {}
     hop = 1
     while hop < len(fanouts) + 1:
         if hop == 1:
@@ -25,7 +29,12 @@ def direct_sub_graph(anchor_node_ids, cls_node_ids, fanouts, g, edge_dir):
         else:
             node_ids = neighbors_dict['hop_{}'.format(hop - 1)]
         sg = sample_neighbors(g=g, nodes=node_ids, edge_dir=edge_dir, fanout=fanouts[hop - 1])
-        sg_src, sg_dst = sg.edges(order='eid')
+        sg_src, sg_dst = sg.edges()
+        sg_eids, sg_tids = sg.edata['_ID'], sg.edata['tid']
+        sg_src_list, sg_dst_list = sg_src.tolist(), sg_dst.tolist()
+        sg_eid_list, sg_tid_list = sg_eids.tolist(), sg_tids.tolist()
+        for eid, src_id, tid, dst_id in zip(sg_eid_list, sg_src_list, sg_tid_list, sg_dst_list):
+            edge_dict[eid] = (src_id, tid, dst_id)
         if edge_dir == 'in':
             hop_neighbor = sg_src
         elif edge_dir == 'out':
@@ -34,34 +43,49 @@ def direct_sub_graph(anchor_node_ids, cls_node_ids, fanouts, g, edge_dir):
             raise 'Edge direction {} is not supported'.format(edge_dir)
         neighbors_dict['hop_{}'.format(hop)] = hop_neighbor
         hop = hop + 1
-    return neighbors_dict
+    return neighbors_dict, edge_dict
 
-def sub_graph_extractor(g: DGLHeteroGraph, neighbor_dict_pair: tuple, edge_dir: str, n_relations, cls_id,
+def sub_graph_extractor(g: DGLHeteroGraph, neighbor_dict_pair: tuple, edge_dict_pair: tuple,
+                        edge_dir: str, n_relations, cls_id,
                         special_relation2id: dict, reverse=False):
     in_neighbor_dict, out_neighbor_dict = neighbor_dict_pair
+    in_edge_dict, out_edge_dict = edge_dict_pair
     if edge_dir == 'in':
         sub_graph_node_tensor_list = [in_neighbor_dict['cls'], in_neighbor_dict['anchor']]
         sub_graph_node_tensor_list += [value for key, value in in_neighbor_dict.items() if key not in ['cls', 'anchor']]
         sub_graph_nodes = torch.cat(sub_graph_node_tensor_list).tolist()
+        sub_graph_edge_dict = in_edge_dict
     elif edge_dir == 'out':
         sub_graph_node_tensor_list = [out_neighbor_dict['cls'], out_neighbor_dict['anchor']]
         sub_graph_node_tensor_list += [value for key, value in out_neighbor_dict.items() if key not in ['cls', 'anchor']]
         sub_graph_nodes = torch.cat(sub_graph_node_tensor_list).tolist()
+        sub_graph_edge_dict = out_edge_dict
     elif edge_dir == 'all':
         sub_graph_node_tensor_list = [in_neighbor_dict['cls'], in_neighbor_dict['anchor']]
         sub_graph_node_tensor_list += [value for key, value in in_neighbor_dict.items() if key not in ['cls', 'anchor']]
         sub_graph_node_tensor_list += [value for key, value in out_neighbor_dict.items() if key not in ['cls', 'anchor']]
         sub_graph_nodes = torch.cat(sub_graph_node_tensor_list).tolist()
+        sub_graph_edge_dict = {**in_edge_dict, **out_edge_dict}
     else:
         raise 'Edge direction {} is not supported'.format(edge_dir)
     sub_graph_nodes = list(OrderedDict.fromkeys(sub_graph_nodes))
-    sub_graph = dgl.node_subgraph(graph=g, nodes=sub_graph_nodes)
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    par2son_id_map = dict(zip(sub_graph_nodes, list(range(len(sub_graph_nodes)))))
+    sub_n_entities = len(par2son_id_map)
+    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    sub_graph_edges = np.array([(par2son_id_map[value[0]], value[1], par2son_id_map[value[2]])
+                                for _, value in sub_graph_edge_dict.items()]).transpose()
+    src, etype_id, dst = sub_graph_edges
+    coo = sp.sparse.coo_matrix((np.ones(len(src)), (src, dst)), shape=[sub_n_entities, sub_n_entities])
+    sub_graph = dgl.from_scipy(coo)  ## 0.6.2 New graph construction
+    sub_graph.edata['tid'] = F.tensor(etype_id, F.int64)
+    sub_graph.ndata['nid'] = torch.LongTensor(sub_graph_nodes)
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     if reverse:
         sg_src, sg_dst = sub_graph.edges()
         sub_graph.add_edges(u=sg_dst, v=sg_src, data={'tid': sub_graph.edata['tid'] + n_relations})
     ## adding cls relation
-    cls_id_idx = (sub_graph.ndata[dgl.NID] == cls_id).nonzero(as_tuple=True)[0]
+    cls_id_idx = (sub_graph.ndata['nid'] == cls_id).nonzero(as_tuple=True)[0]
     assert cls_id_idx == 0
     node_ids = torch.arange(1, sub_graph.number_of_nodes())
     cls_dst = torch.empty(sub_graph.number_of_nodes() - 1, dtype=torch.long).fill_(cls_id_idx[0])
@@ -77,7 +101,7 @@ def sub_graph_extractor(g: DGLHeteroGraph, neighbor_dict_pair: tuple, edge_dir: 
 def dense_graph_constructor(neighbor_dict_pair: tuple, sub_graph, hop_num, special_relation2id: dict, edge_dir: str, reverse=False):
     dense_sub_graph = deepcopy(sub_graph)
     in_neighbor_dict, out_neighbor_dict = neighbor_dict_pair
-    sub_graph_par_ids = sub_graph.ndata[dgl.NID].tolist()
+    sub_graph_par_ids = sub_graph.ndata['nid'].tolist()
     par_to_son_map = dict(zip(sub_graph_par_ids, list(range(len(sub_graph_par_ids)))))
 
     if edge_dir == 'in':
@@ -166,23 +190,24 @@ class SubGraphPairDataset(Dataset):
         anchor_node_ids = torch.LongTensor([idx])
         cls_node_ids = torch.LongTensor([self.special_entity2id['cls']])
         if self.edge_dir == 'in':
-            in_neighbors_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
+            in_neighbors_dict, in_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
                                              g=self.g, fanouts=self.fanouts, edge_dir=self.edge_dir)
-            out_neighbors_dict = None
+            out_neighbors_dict, out_edge_dict = None, None
         elif self.edge_dir == 'out':
-            in_neighbors_dict = None
-            out_neighbors_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
+            in_neighbors_dict, in_edge_dict = None, None
+            out_neighbors_dict, out_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
                                                g=self.g, fanouts=self.fanouts, edge_dir=self.edge_dir)
         elif self.edge_dir == 'all':
-            in_neighbors_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
+            in_neighbors_dict, in_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
                                              g=self.g, fanouts=self.fanouts, edge_dir='in')
-            out_neighbors_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
+            out_neighbors_dict, out_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
                                                g=self.g, fanouts=self.fanouts, edge_dir='out')
         else:
             raise 'Edge direction {} is not supported'.format(self.edge_dir)
 
         sub_graph, cls_sub_id = sub_graph_extractor(g=self.g, neighbor_dict_pair=(in_neighbors_dict, out_neighbors_dict),
-                                        cls_id=self.special_entity2id['cls'], special_relation2id=self.special_relation2id,
+                                                    edge_dict_pair=(in_edge_dict, out_edge_dict),
+                                               cls_id=self.special_entity2id['cls'], special_relation2id=self.special_relation2id,
                                                edge_dir=self.edge_dir, reverse=self.reverse, n_relations=self.nrelation)
         dense_sub_graph, anchor_sub_id = dense_graph_constructor(neighbor_dict_pair=(in_neighbors_dict, out_neighbors_dict), sub_graph=sub_graph,
                                                   hop_num=self.hop_num,
@@ -203,7 +228,6 @@ class SubGraphPairDataset(Dataset):
         batch = {'anchor': anchor_nodes, 'cls': cls_sub_ids, 'anchor_sub': anchor_sub_ids,
                  'node_number': number_of_nodes, 'edge_number': edge_number, 'batch_graph': batch_graphs}
         return batch
-
 
 class SubGraphDataset(Dataset):
     def __init__(self, g: DGLHeteroGraph, nentity: int, nrelation: int,
@@ -235,25 +259,30 @@ class SubGraphDataset(Dataset):
         anchor_node_ids = torch.LongTensor([idx])
         cls_node_ids = torch.LongTensor([self.special_entity2id['cls']])
         if self.edge_dir == 'in':
-            in_neighbors_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
-                                             g=self.g, fanouts=self.fanouts, edge_dir=self.edge_dir)
-            out_neighbors_dict = None
+            in_neighbors_dict, in_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids,
+                                                               cls_node_ids=cls_node_ids,
+                                                               g=self.g, fanouts=self.fanouts, edge_dir=self.edge_dir)
+            out_neighbors_dict, out_edge_dict = None, None
         elif self.edge_dir == 'out':
-            in_neighbors_dict = None
-            out_neighbors_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
-                                               g=self.g, fanouts=self.fanouts, edge_dir=self.edge_dir)
+            in_neighbors_dict, in_edge_dict = None, None
+            out_neighbors_dict, out_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids,
+                                                                 cls_node_ids=cls_node_ids,
+                                                                 g=self.g, fanouts=self.fanouts, edge_dir=self.edge_dir)
         elif self.edge_dir == 'all':
-            in_neighbors_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
-                                             g=self.g, fanouts=self.fanouts, edge_dir='in')
-            out_neighbors_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
-                                               g=self.g, fanouts=self.fanouts, edge_dir='out')
+            in_neighbors_dict, in_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids,
+                                                               cls_node_ids=cls_node_ids,
+                                                               g=self.g, fanouts=self.fanouts, edge_dir='in')
+            out_neighbors_dict, out_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids,
+                                                                 cls_node_ids=cls_node_ids,
+                                                                 g=self.g, fanouts=self.fanouts, edge_dir='out')
         else:
             raise 'Edge direction {} is not supported'.format(self.edge_dir)
 
         sub_graph, cls_sub_id = sub_graph_extractor(g=self.g, neighbor_dict_pair=(in_neighbors_dict, out_neighbors_dict),
-                                        cls_id=self.special_entity2id['cls'], special_relation2id=self.special_relation2id,
+                                                    edge_dict_pair=(in_edge_dict, out_edge_dict),
+                                                cls_id=self.special_entity2id['cls'], special_relation2id=self.special_relation2id,
                                                edge_dir=self.edge_dir, reverse=self.reverse, n_relations=self.nrelation)
-        sub_graph_par_ids = sub_graph.ndata[dgl.NID].tolist()
+        sub_graph_par_ids = sub_graph.ndata['nid'].tolist()
         par_to_son_map = dict(zip(sub_graph_par_ids, list(range(len(sub_graph_par_ids)))))
         anchor_sub_id = par_to_son_map[idx]
         anchor_sub_id = torch.LongTensor([anchor_sub_id])

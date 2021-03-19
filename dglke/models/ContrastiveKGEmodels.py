@@ -8,15 +8,14 @@ from dgl.nn.pytorch.utils import Identity
 from pytorch_metric_learning.losses import NTXentLoss
 EMB_INIT_EPS = 2.0
 
-class KGEGraphModel(nn.Module):
+class KGEGraphEncoder(nn.Module):
     def __init__(self, num_layers: int, in_ent_dim: int, in_rel_dim: int, hidden_dim: int, head_num: int,
                 feat_drop: float, attn_drop: float, negative_slope=0.2,
                  residual=False, diff_head_tail=False, activation=None):
-        super(KGEGraphModel, self).__init__()
+        super(KGEGraphEncoder, self).__init__()
         self.num_layers = num_layers
         self.gat_layers = nn.ModuleList()
         self.activation = activation
-        # input projection (no residual)
         self.gat_layers.append(KGELayer(in_ent_feats=in_ent_dim,
                                         in_rel_feats=in_rel_dim,
                                         out_ent_feats=hidden_dim,
@@ -78,7 +77,7 @@ class ContrastiveKEModel(nn.Module):
         self.eps = EMB_INIT_EPS
         self.ent_emb_init = (gamma + self.eps) / ent_dim
         self.rel_emb_init = (gamma + self.eps) / rel_dim
-        self.graph_encoder = KGEGraphModel(num_layers=n_layers, in_ent_dim=ent_dim, in_rel_dim=rel_dim,
+        self.graph_encoder = KGEGraphEncoder(num_layers=n_layers, in_ent_dim=ent_dim, in_rel_dim=rel_dim,
                                            hidden_dim=graph_hidden_dim, head_num=head_num,
                                            feat_drop=feat_drop, attn_drop=attn_drop,
                                            activation=activation, negative_slope=negative_slope,
@@ -95,12 +94,19 @@ class ContrastiveKEModel(nn.Module):
         gain = nn.init.calculate_gain('relu')
         if isinstance(self.rel_map, nn.Linear):
             nn.init.xavier_normal_(self.res_fc_ent.weight, gain=gain)
+        self.relation_emb = self.rel_map.forward(self.relation_emb)
 
     def forward(self, g):
         with g.local_scope():
             cls_embed = self.graph_encoder.forward(batch_g=g, ent_embed=self.entity_emb, rel_embed=self.relation_emb)
-            loss = self.xent_loss(cls_embed)
-            return loss, cls_embed
+            return cls_embed
+
+    def loss_computation(self, cls_embed):
+        loss = self.xent_loss(cls_embed)
+        return loss
+
+    def relation_embed(self):
+        return self.relation_emb
 
 class GraphContrastiveLoss(nn.Module):
     def __init__(self, temperature: float=0.1):

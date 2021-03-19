@@ -3,7 +3,7 @@ import numpy as np
 import scipy as sp
 import dgl.backend as F
 from dglke.dataloader.KGutils import SoftRelationPartition, RandomPartition, ConstructGraph
-from graphutils.gsampleutils import SubGraphPairDataset, SubGraphDataset
+from graphutils.edgesubgraphutils import SubGraphPairDataset, SubGraphDataset
 from torch.utils.data import DataLoader
 
 class UniformNegativeSampler(object):
@@ -125,7 +125,7 @@ def train_data_loader(args, dataset):
                                               fanouts=fanouts, special_entity2id=train_data.special_entity_dict,
                                               special_relation2id=train_data.special_relation_dict, edge_dir=args.edge_dir)
     data_loader = DataLoader(dataset=sub_graph_pair_data, batch_size=args.graph_batch_size,
-                             shuffle=True,
+                             shuffle=False,
                              drop_last=True,
                              collate_fn=SubGraphPairDataset.collate_fn, num_workers=args.cpu_num)
     n_entities, n_relations = train_data.n_entities, train_data.n_relations

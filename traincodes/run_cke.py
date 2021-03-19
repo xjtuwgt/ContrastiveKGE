@@ -28,15 +28,17 @@ def train_run():
         argv = sys.argv[1:]
     args = parser.parse_args(argv)
     seed_everything(seed=args.rand_seed + args.local_rank)
-
-
-    for key, value in vars(args).items():
-        logging.info("{}:{}".format(key, value))
     ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     if args.data_path and not os.path.exists(args.data_path):
         os.makedirs(args.data_path)
     if args.save_path and not os.path.exists(args.save_path):
         os.makedirs(args.save_path)
+
+    if args.exp_name is not None:
+        args.exp_name = os.path.join(args.save_path, args.exp_name)
+        os.makedirs(args.exp_name, exist_ok=True)
+    for key, value in vars(args).items():
+        logging.info("{}:{}".format(key, value))
     ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     dataset = get_dataset(args.data_path,
                           args.dataset,
@@ -97,27 +99,35 @@ def train_run():
         for batch_idx, batch in enumerate(epoch_iterator):
             for key, value in batch.items():
                 batch[key] = value.to(device)
-            model.train()
-            batch_g = batch['batch_graph']
-            loss, cls_embed = model.forward(batch_g)
-            loss_in_batchs.append(loss.data.item())
-            del batch
-            # break
-            optimizer.zero_grad()
-            loss.backward()
-            torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+            # model.train()
 
-            optimizer.step()
-            scheduler.step()
-            model.zero_grad()
-            if (batch_idx + 1) % eval_batch_interval_num == 0:
-                logging.info("Epoch {:05d} | Step {:05d} | Time(s) {:.4f} | Loss {:.4f}"
-                             .format(epoch + 1, batch_idx +1, time() - start_time, loss.item()))
-    # print('tid {}'.format(graph.edata['tid'][0]))
-    torch.save({k: v.cpu() for k, v in model.state_dict().items()},
-               join(args.exp_name, f'model.pkl'))
-
-    print('Run time {}'.format(time() - start_time))
+            batch_graph = batch['batch_graph']
+            print('anchor', batch['anchor'])
+            print('edge num', batch_graph.number_of_edges())
+            if batch_idx > 10:
+                return
+    #         cls_embed = model.forward(batch_graph)
+    #         loss = model.loss_computation(cls_embed=cls_embed)
+    #         loss_in_batchs.append(loss.data.item())
+    #         del batch
+    #         # break
+    #         optimizer.zero_grad()
+    #         loss.backward()
+    #         torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+    #
+    #         optimizer.step()
+    #         scheduler.step()
+    #         model.zero_grad()
+    #         if (batch_idx + 1) % eval_batch_interval_num == 0:
+    #             logging.info("Epoch {:05d} | Step {:05d} | Time(s) {:.4f} | Loss {:.4f}"
+    #                          .format(epoch + 1, batch_idx +1, time() - start_time, loss.item()))
+    # # print('tid {}'.format(graph.edata['tid'][0]))
+    # torch.save({k: v.cpu() for k, v in model.state_dict().items()},
+    #            join(args.exp_name, f'model.pkl'))
+    #
+    #
+    #
+    # print('Run time {}'.format(time() - start_time))
 
 
 def infer_run():
@@ -156,6 +166,7 @@ def infer_run():
     ###++++++++++++++++++++++++++++++++++++++++++
     start_time = time()
     epoch_iterator = tqdm(dev_data_loader, desc="Iteration", miniters=100, disable=args.local_rank not in [-1, 0])
+
     for batch_idx, batch in enumerate(epoch_iterator):
         x = batch['anchor']
         # print(batch['node_number'])
