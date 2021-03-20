@@ -41,7 +41,7 @@ class KGEGraphEncoder(nn.Module):
 
     def forward(self, batch_g, ent_embed: ExternalEmbedding, rel_embed: ExternalEmbedding):
         rel_ids = batch_g.edata['tid']
-        ent_ids = batch_g.ndata[dgl.NID]
+        ent_ids = batch_g.ndata['nid']
         ent_features = ent_embed(ent_ids)
         rel_features = rel_embed(rel_ids)
         # print(ent_features.shape, rel_features.shape)

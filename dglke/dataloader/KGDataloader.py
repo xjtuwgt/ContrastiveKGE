@@ -49,8 +49,6 @@ class TrainDataset(object):
         self.n_relations = self.n_relations + len(self.special_relation_dict)
         self.n_entities = self.n_entities + len(self.special_entity_dict)
 
-
-
 class EvalDataset(object):
     def __init__(self, dataset, eval_percent):
         src = [dataset.train[0]]
@@ -125,7 +123,7 @@ def train_data_loader(args, dataset):
                                               fanouts=fanouts, special_entity2id=train_data.special_entity_dict,
                                               special_relation2id=train_data.special_relation_dict, edge_dir=args.edge_dir)
     data_loader = DataLoader(dataset=sub_graph_pair_data, batch_size=args.graph_batch_size,
-                             shuffle=False,
+                             shuffle=True,
                              drop_last=True,
                              collate_fn=SubGraphPairDataset.collate_fn, num_workers=args.cpu_num)
     n_entities, n_relations = train_data.n_entities, train_data.n_relations

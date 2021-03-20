@@ -99,35 +99,30 @@ def train_run():
         for batch_idx, batch in enumerate(epoch_iterator):
             for key, value in batch.items():
                 batch[key] = value.to(device)
-            # model.train()
-
+            model.train()
             batch_graph = batch['batch_graph']
-            print('anchor', batch['anchor'])
-            print('edge num', batch_graph.number_of_edges())
-            if batch_idx > 10:
-                return
-    #         cls_embed = model.forward(batch_graph)
-    #         loss = model.loss_computation(cls_embed=cls_embed)
-    #         loss_in_batchs.append(loss.data.item())
-    #         del batch
-    #         # break
-    #         optimizer.zero_grad()
-    #         loss.backward()
-    #         torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
-    #
-    #         optimizer.step()
-    #         scheduler.step()
-    #         model.zero_grad()
-    #         if (batch_idx + 1) % eval_batch_interval_num == 0:
-    #             logging.info("Epoch {:05d} | Step {:05d} | Time(s) {:.4f} | Loss {:.4f}"
-    #                          .format(epoch + 1, batch_idx +1, time() - start_time, loss.item()))
-    # # print('tid {}'.format(graph.edata['tid'][0]))
-    # torch.save({k: v.cpu() for k, v in model.state_dict().items()},
-    #            join(args.exp_name, f'model.pkl'))
-    #
-    #
-    #
-    # print('Run time {}'.format(time() - start_time))
+            cls_embed = model.forward(batch_graph)
+            loss = model.loss_computation(cls_embed=cls_embed)
+            loss_in_batchs.append(loss.data.item())
+            del batch
+            # break
+            optimizer.zero_grad()
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+
+            optimizer.step()
+            scheduler.step()
+            model.zero_grad()
+            if (batch_idx + 1) % eval_batch_interval_num == 0:
+                logging.info("Epoch {:05d} | Step {:05d} | Time(s) {:.4f} | Loss {:.4f}"
+                             .format(epoch + 1, batch_idx +1, time() - start_time, loss.item()))
+    # print('tid {}'.format(graph.edata['tid'][0]))
+    torch.save({k: v.cpu() for k, v in model.state_dict().items()},
+               join(args.exp_name, f'model.pkl'))
+
+
+
+    print('Run time {}'.format(time() - start_time))
 
 
 def infer_run():
@@ -170,10 +165,4 @@ def infer_run():
     for batch_idx, batch in enumerate(epoch_iterator):
         x = batch['anchor']
         # print(batch['node_number'])
-        if batch['node_number'] == 1:
-            print(batch['batch_graph'])
-            print(batch['anchor'])
-            print(batch['cls'])
-            print(batch['batch_graph'].number_of_nodes())
-            print(batch['node_number'])
     print('Run time {}'.format(time() - start_time))

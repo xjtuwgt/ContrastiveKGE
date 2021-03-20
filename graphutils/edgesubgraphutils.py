@@ -45,7 +45,7 @@ def direct_sub_graph(anchor_node_ids, cls_node_ids, fanouts, g, edge_dir):
         hop = hop + 1
     return neighbors_dict, edge_dict
 
-def sub_graph_extractor(g: DGLHeteroGraph, neighbor_dict_pair: tuple, edge_dict_pair: tuple,
+def sub_graph_extractor(neighbor_dict_pair: tuple, edge_dict_pair: tuple,
                         edge_dir: str, n_relations, cls_id,
                         special_relation2id: dict, reverse=False):
     in_neighbor_dict, out_neighbor_dict = neighbor_dict_pair
@@ -75,7 +75,10 @@ def sub_graph_extractor(g: DGLHeteroGraph, neighbor_dict_pair: tuple, edge_dict_
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     sub_graph_edges = np.array([(par2son_id_map[value[0]], value[1], par2son_id_map[value[2]])
                                 for _, value in sub_graph_edge_dict.items()]).transpose()
-    src, etype_id, dst = sub_graph_edges
+    if len(sub_graph_edges) == 0:
+        src = etype_id = dst = sub_graph_edges
+    else:
+        src, etype_id, dst = sub_graph_edges
     coo = sp.sparse.coo_matrix((np.ones(len(src)), (src, dst)), shape=[sub_n_entities, sub_n_entities])
     sub_graph = dgl.from_scipy(coo)  ## 0.6.2 New graph construction
     sub_graph.edata['tid'] = F.tensor(etype_id, F.int64)
@@ -159,7 +162,6 @@ def dense_graph_constructor(neighbor_dict_pair: tuple, sub_graph, hop_num, speci
     anchor_sub_id = torch.LongTensor([anchor_sub_id])
     return dense_sub_graph, anchor_sub_id
 
-
 class SubGraphPairDataset(Dataset):
     def __init__(self, g: DGLHeteroGraph, nentity: int, nrelation: int,
                  fanouts: list, special_entity2id: dict, special_relation2id: dict,
@@ -205,7 +207,7 @@ class SubGraphPairDataset(Dataset):
         else:
             raise 'Edge direction {} is not supported'.format(self.edge_dir)
 
-        sub_graph, cls_sub_id = sub_graph_extractor(g=self.g, neighbor_dict_pair=(in_neighbors_dict, out_neighbors_dict),
+        sub_graph, cls_sub_id = sub_graph_extractor(neighbor_dict_pair=(in_neighbors_dict, out_neighbors_dict),
                                                     edge_dict_pair=(in_edge_dict, out_edge_dict),
                                                cls_id=self.special_entity2id['cls'], special_relation2id=self.special_relation2id,
                                                edge_dir=self.edge_dir, reverse=self.reverse, n_relations=self.nrelation)
@@ -278,7 +280,7 @@ class SubGraphDataset(Dataset):
         else:
             raise 'Edge direction {} is not supported'.format(self.edge_dir)
 
-        sub_graph, cls_sub_id = sub_graph_extractor(g=self.g, neighbor_dict_pair=(in_neighbors_dict, out_neighbors_dict),
+        sub_graph, cls_sub_id = sub_graph_extractor(neighbor_dict_pair=(in_neighbors_dict, out_neighbors_dict),
                                                     edge_dict_pair=(in_edge_dict, out_edge_dict),
                                                 cls_id=self.special_entity2id['cls'], special_relation2id=self.special_relation2id,
                                                edge_dir=self.edge_dir, reverse=self.reverse, n_relations=self.nrelation)
