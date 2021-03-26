@@ -94,6 +94,7 @@ def train_run():
     start_epoch = 0
     train_iterator = trange(start_epoch, start_epoch + int(args.num_train_epochs), desc="Epoch",
                             disable=args.local_rank not in [-1, 0])
+    epoch_idx = 0
     for epoch in train_iterator:
         epoch_iterator = tqdm(tr_data_loader, desc="Iteration", miniters=100, disable=args.local_rank not in [-1, 0])
         for batch_idx, batch in enumerate(epoch_iterator):
@@ -116,12 +117,13 @@ def train_run():
             if (batch_idx + 1) % eval_batch_interval_num == 0:
                 logging.info("Epoch {:05d} | Step {:05d} | Time(s) {:.4f} | Loss {:.4f}"
                              .format(epoch + 1, batch_idx +1, time() - start_time, loss.item()))
+        epoch_idx = epoch_idx + 1
+        if epoch_idx % 10 == 0:
+            torch.save({k: v.cpu() for k, v in model.state_dict().items()},
+                       join(args.exp_name, f'model_{epoch_idx}.pkl'))
     # print('tid {}'.format(graph.edata['tid'][0]))
     torch.save({k: v.cpu() for k, v in model.state_dict().items()},
                join(args.exp_name, f'model.pkl'))
-
-
-
     print('Run time {}'.format(time() - start_time))
 
 
