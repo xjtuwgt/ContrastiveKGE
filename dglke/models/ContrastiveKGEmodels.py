@@ -76,7 +76,7 @@ class ContrastiveKEModel(nn.Module):
         self.eps = EMB_INIT_EPS
         self.ent_emb_init = (args.gamma + self.eps) / args.ent_dim
         self.rel_emb_init = (args.gamma + self.eps) / args.rel_dim
-        self.graph_encoder = KGEGraphEncoder(num_layers=args.n_layers, in_ent_dim=args.ent_dim, in_rel_dim=args.rel_dim,
+        self.graph_encoder = KGEGraphEncoder(num_layers=args.layers, in_ent_dim=args.ent_dim, in_rel_dim=args.rel_dim,
                                            hidden_dim=args.graph_hidden_dim, head_num=args.head_num,
                                            feat_drop=args.feat_drop, attn_drop=args.attn_drop,
                                            activation=args.activation, negative_slope=args.negative_slope,
