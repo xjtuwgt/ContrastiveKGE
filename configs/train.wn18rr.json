@@ -9,7 +9,7 @@
     "fanouts": "15,10",
     "ent_dim": 512,
     "rel_dim": 512,
-    "graph_hid_dim": 512,
+    "graph_hidden_dim": 512,
     "head_num": 8,
     "layers": 2,
     "attn_drop": 0.3,
