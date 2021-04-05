@@ -1,33 +1,20 @@
 from torch import nn
-from kgeutils.scorefunction import TransEScore, DistMultScore, SimplEScore
+from kgeutils.scoreutils import TransEScore, DistMultScore, SimplEScore
 from dglke.models.kgembedder import ExternalEmbedding
 EMB_INIT_EPS = 2.0
 
 class KEModel(nn.Module):
-    def __init__(self, args, model_name, n_entities, n_relations, hidden_dim, gamma, hop_num,
-                 double_entity_emb=False, double_relation_emb=False, add_special=False,
-                 special_entity_dict=None, special_relation_dict=None):
+    def __init__(self, args, model_name, n_entities, n_relations, hidden_dim, gamma):
         super(KEModel, self).__init__()
         self.args = args
-        self.has_edge_importance = args.has_edge_importance
         self.n_entities = n_entities
         self.n_relations = n_relations
         self.model_name = model_name
-        self.hop_num = hop_num
         self.hidden_dim = hidden_dim
         self.eps = EMB_INIT_EPS
         ######################################################
-        self.add_special_ = add_special
-        self.special_entity_dict = special_entity_dict
-        self.special_relation_dict = special_relation_dict
-        if self.add_special_:
-            assert special_relation_dict is not None and special_entity_dict is not None
-            self.n_entities = self.n_entities + len(self.special_entity_dict)
-            self.n_relations = self.n_relations + len(self.special_relation_dict)
-        ######################################################
-
-        entity_dim = 2 * hidden_dim if double_entity_emb else hidden_dim
-        relation_dim = 2 * hidden_dim if double_relation_emb else hidden_dim
+        entity_dim = hidden_dim
+        relation_dim = hidden_dim
 
         self.entity_emb = ExternalEmbedding(num=self.n_entities, dim=entity_dim)
         self.relation_emb = ExternalEmbedding(num=self.n_relations, dim=relation_dim)
@@ -52,7 +39,6 @@ class KEModel(nn.Module):
         """Re-initialize the model.
         """
         self.entity_emb.init(self.emb_init)
-        self.score_func.reset_parameters()
 
     def save_emb(self, path, dataset):
         """Save the model.
