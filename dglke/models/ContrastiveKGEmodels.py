@@ -82,9 +82,9 @@ class ContrastiveKEModel(nn.Module):
                                            feat_drop=feat_drop, attn_drop=attn_drop,
                                            activation=activation, negative_slope=negative_slope,
                                            residual=residual, diff_head_tail=diff_head_tail)
-
-        self.xent_loss = GraphContrastiveLoss(temperature=temperature)
         self.initialize_parameters()
+        self.xent_loss = GraphContrastiveLoss(temperature=temperature)
+
 
     def initialize_parameters(self):
         """Re-initialize the model.
