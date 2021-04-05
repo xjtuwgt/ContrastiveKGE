@@ -21,6 +21,7 @@ import math
 import os
 import csv
 import argparse
+from argparse import ArgumentParser
 import json
 from os.path import join
 import numpy as np
@@ -397,3 +398,14 @@ def prepare_save_path(args):
 
     if not os.path.exists(args.save_path):
         os.makedirs(args.save_path)
+
+def save_args(args, path):
+    with open(path, 'w') as f:
+        json.dump(args.__dict__, f, indent=2)
+
+def load_args(args_path):
+    parser = ArgumentParser()
+    args = parser.parse_args()
+    with open(args_path, 'r') as f:
+        args.__dict__ = json.load(f)
+    return args

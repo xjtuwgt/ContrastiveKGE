@@ -1,6 +1,6 @@
 from dglke.dataloader.KGDataset import get_dataset
 import torch
-from kgeutils.ioutils import ArgParser
+from kgeutils.ioutils import ArgParser, save_args
 from dglke.dataloader.KGCDataloader import train_data_loader, develop_data_loader
 from dglke.models.ContrastiveKGEmodels import ContrastiveKEModel
 import sys
@@ -91,6 +91,9 @@ def train_run():
     start_epoch = 0
     train_iterator = trange(start_epoch, start_epoch + int(args.num_train_epochs), desc="Epoch",
                             disable=args.local_rank not in [-1, 0])
+    ##++++++++++++++
+    save_args(args=args, path=join(args.exp_name, f'config.txt'))
+    ##++++++++++++++
     epoch_idx = 0
     for epoch in train_iterator:
         epoch_iterator = tqdm(tr_data_loader, desc="Iteration", miniters=100, disable=args.local_rank not in [-1, 0])
