@@ -657,65 +657,65 @@ def get_dataset(data_path, data_name, format_str, delimiter='\t', files=None, ha
 
     return dataset
 
-def get_partition_dataset(data_path, data_name, part_id):
-    part_name = os.path.join(data_name, 'partition_'+str(part_id))
-    path = os.path.join(data_path, part_name)
-
-    if not os.path.exists(path):
-        print('Partition file not found.')
-        exit()
-
-    train_path = os.path.join(path, 'train.txt')
-    local2global_path = os.path.join(path, 'local_to_global.txt')
-    partition_book_path = os.path.join(path, 'partition_book.txt')
-    relation_path = os.path.join(path, 'relation_count.txt')
-
-    dataset = PartitionKGDataset(relation_path,
-                                 train_path,
-                                 local2global_path,
-                                 read_triple=True)
-
-    partition_book = []
-    with open(partition_book_path) as f:
-        for line in f:
-            partition_book.append(int(line))
-
-    local_to_global = []
-    with open(local2global_path) as f:
-        for line in f:
-            local_to_global.append(int(line))
-
-    return dataset, partition_book, local_to_global
-
-def get_server_partition_dataset(data_path, data_name, part_id):
-    part_name = os.path.join(data_name, 'partition_'+str(part_id))
-    path = os.path.join(data_path, part_name)
-
-    if not os.path.exists(path):
-        print('Partition file not found.')
-        exit()
-
-    train_path = os.path.join(path, 'train.txt')
-    local2global_path = os.path.join(path, 'local_to_global.txt')
-    relation_path = os.path.join(path, 'relation_count.txt')
-
-    dataset = PartitionKGDataset(relation_path,
-                                 train_path,
-                                 local2global_path,
-                                 read_triple=False)
-
-    n_entities = _file_line(os.path.join(path, 'partition_book.txt'))
-
-    local_to_global = []
-    with open(local2global_path) as f:
-        for line in f:
-            local_to_global.append(int(line))
-
-    global_to_local = [0] * n_entities
-    for i in range(len(local_to_global)):
-        global_id = local_to_global[i]
-        global_to_local[global_id] = i
-
-    local_to_global = None
-
-    return global_to_local, dataset
+# def get_partition_dataset(data_path, data_name, part_id):
+#     part_name = os.path.join(data_name, 'partition_'+str(part_id))
+#     path = os.path.join(data_path, part_name)
+#
+#     if not os.path.exists(path):
+#         print('Partition file not found.')
+#         exit()
+#
+#     train_path = os.path.join(path, 'train.txt')
+#     local2global_path = os.path.join(path, 'local_to_global.txt')
+#     partition_book_path = os.path.join(path, 'partition_book.txt')
+#     relation_path = os.path.join(path, 'relation_count.txt')
+#
+#     dataset = PartitionKGDataset(relation_path,
+#                                  train_path,
+#                                  local2global_path,
+#                                  read_triple=True)
+#
+#     partition_book = []
+#     with open(partition_book_path) as f:
+#         for line in f:
+#             partition_book.append(int(line))
+#
+#     local_to_global = []
+#     with open(local2global_path) as f:
+#         for line in f:
+#             local_to_global.append(int(line))
+#
+#     return dataset, partition_book, local_to_global
+#
+# def get_server_partition_dataset(data_path, data_name, part_id):
+#     part_name = os.path.join(data_name, 'partition_'+str(part_id))
+#     path = os.path.join(data_path, part_name)
+#
+#     if not os.path.exists(path):
+#         print('Partition file not found.')
+#         exit()
+#
+#     train_path = os.path.join(path, 'train.txt')
+#     local2global_path = os.path.join(path, 'local_to_global.txt')
+#     relation_path = os.path.join(path, 'relation_count.txt')
+#
+#     dataset = PartitionKGDataset(relation_path,
+#                                  train_path,
+#                                  local2global_path,
+#                                  read_triple=False)
+#
+#     n_entities = _file_line(os.path.join(path, 'partition_book.txt'))
+#
+#     local_to_global = []
+#     with open(local2global_path) as f:
+#         for line in f:
+#             local_to_global.append(int(line))
+#
+#     global_to_local = [0] * n_entities
+#     for i in range(len(local_to_global)):
+#         global_id = local_to_global[i]
+#         global_to_local[global_id] = i
+#
+#     local_to_global = None
+#
+#     return global_to_local, dataset

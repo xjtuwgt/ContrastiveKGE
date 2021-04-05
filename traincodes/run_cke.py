@@ -1,7 +1,7 @@
 from dglke.dataloader.KGDataset import get_dataset
 import torch
 from kgeutils.ioutils import ArgParser
-from dglke.dataloader.KGDataloader import train_data_loader, develop_data_loader
+from dglke.dataloader.KGCDataloader import train_data_loader, develop_data_loader
 from dglke.models.ContrastiveKGEmodels import ContrastiveKEModel
 import sys
 import os
