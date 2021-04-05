@@ -324,7 +324,7 @@ class ArgParser(CommonArgParser):
         self.add_argument('--reverse_r', default=True, action='store_true', help='adding special entity/relation')
         self.add_argument('--ent_dim', type=int, default=128, help='kg embedding dimension')
         self.add_argument('--rel_dim', type=int, default=128, help='kg embedding dimension')
-        self.add_argument('--graph_hid_dim', type=int, default=128, help='graph hidden dimension')
+        self.add_argument('--graph_hidden_dim', type=int, default=128, help='graph hidden dimension')
         self.add_argument('--head_num', type=int, default=4, help='head number of GNNs')
         self.add_argument('--attn_drop', type=float, default=0.25, help='attention dropout for GNN')
         self.add_argument('--feat_drop', type=float, default=0.25, help='feature dropout for GNN')
