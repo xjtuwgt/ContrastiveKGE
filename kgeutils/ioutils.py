@@ -347,6 +347,7 @@ class ArgParser(CommonArgParser):
 
         self.add_argument("--n_entities", type=int, default=None, help="number of entities")
         self.add_argument("--n_relations", type=int, default=None, help="number of relations")
+        self.add_argument("--xent_temperature", type=float, default=0.10, help="temperature of cross entropy")
 
         self.add_argument('--learning_rate', default=2e-4, type=float, help='Learning rate')
         self.add_argument('--weight-decay', type=float, default=5e-4, help="weight decay")
