@@ -56,34 +56,33 @@ class KGEGraphEncoder(nn.Module):
             return graph_cls_embed
 
 class ContrastiveKEModel(nn.Module):
-    def __init__(self, n_entities: int, n_relations: int, ent_dim: int, rel_dim: int, n_layers: int, gamma: float,
-                 graph_hidden_dim: int, head_num: int, feat_drop, attn_drop, negative_slope=0.2,
-                 temperature=0.1, residual=False, diff_head_tail=False, activation=None):
+    def __init__(self, args):
         super(ContrastiveKEModel, self).__init__()
-        self.entity_emb = ExternalEmbedding(num=n_entities, dim=ent_dim)
-        self.relation_emb = ExternalEmbedding(num=n_relations, dim=rel_dim)
+        self.args = args
+        self.entity_emb = ExternalEmbedding(num=args.n_entities, dim=args.ent_dim)
+        self.relation_emb = ExternalEmbedding(num=args.n_relations, dim=args.rel_dim)
 
-        self.n_entities = n_entities
-        self.n_relations = n_relations
-        self.kg_ent_dim = ent_dim
-        self.kg_rel_dim = rel_dim
-        self.graph_hidden_dim = graph_hidden_dim
+        self.n_entities = args.n_entities
+        self.n_relations = args.n_relations
+        self.kg_ent_dim = args.ent_dim
+        self.kg_rel_dim = args.rel_dim
+        self.graph_hidden_dim = args.graph_hidden_dim
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-        if graph_hidden_dim != rel_dim:
-            self.rel_map = nn.Linear(rel_dim, graph_hidden_dim, bias=False)
+        if args.graph_hidden_dim != args.rel_dim:
+            self.rel_map = nn.Linear(args.rel_dim, args.graph_hidden_dim, bias=False)
         else:
             self.rel_map = Identity()
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         self.eps = EMB_INIT_EPS
-        self.ent_emb_init = (gamma + self.eps) / ent_dim
-        self.rel_emb_init = (gamma + self.eps) / rel_dim
-        self.graph_encoder = KGEGraphEncoder(num_layers=n_layers, in_ent_dim=ent_dim, in_rel_dim=rel_dim,
-                                           hidden_dim=graph_hidden_dim, head_num=head_num,
-                                           feat_drop=feat_drop, attn_drop=attn_drop,
-                                           activation=activation, negative_slope=negative_slope,
-                                           residual=residual, diff_head_tail=diff_head_tail)
+        self.ent_emb_init = (args.gamma + self.eps) / args.ent_dim
+        self.rel_emb_init = (args.gamma + self.eps) / args.rel_dim
+        self.graph_encoder = KGEGraphEncoder(num_layers=args.n_layers, in_ent_dim=args.ent_dim, in_rel_dim=args.rel_dim,
+                                           hidden_dim=args.graph_hidden_dim, head_num=args.head_num,
+                                           feat_drop=args.feat_drop, attn_drop=args.attn_drop,
+                                           activation=args.activation, negative_slope=args.negative_slope,
+                                           residual=args.residual, diff_head_tail=args.diff_head_tail)
         self.initialize_parameters()
-        self.xent_loss = GraphContrastiveLoss(temperature=temperature)
+        self.xent_loss = GraphContrastiveLoss(temperature=args.temperature)
 
 
     def initialize_parameters(self):

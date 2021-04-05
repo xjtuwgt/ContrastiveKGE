@@ -3,36 +3,36 @@ from kgeutils.scoreutils import TransEScore, DistMultScore, SimplEScore
 from dglke.models.kgembedder import ExternalEmbedding
 EMB_INIT_EPS = 2.0
 
-class KEModel(nn.Module):
-    def __init__(self, args, model_name, n_entities, n_relations, hidden_dim, gamma):
-        super(KEModel, self).__init__()
+class KGEModel(nn.Module):
+    def __init__(self, args):
+        super(KGEModel, self).__init__()
         self.args = args
-        self.n_entities = n_entities
-        self.n_relations = n_relations
-        self.model_name = model_name
-        self.hidden_dim = hidden_dim
+        self.n_entities = args.n_entities
+        self.n_relations = args.n_relations
+        self.model_name = args.model_name
+        self.hidden_dim = args.hidden_dim
         self.eps = EMB_INIT_EPS
         ######################################################
-        entity_dim = hidden_dim
-        relation_dim = hidden_dim
+        entity_dim = self.hidden_dim
+        relation_dim = self.hidden_dim
 
         self.entity_emb = ExternalEmbedding(num=self.n_entities, dim=entity_dim)
         self.relation_emb = ExternalEmbedding(num=self.n_relations, dim=relation_dim)
 
         self.rel_dim = relation_dim
         self.entity_dim = entity_dim
-        self.emb_init = (gamma + self.eps) / hidden_dim
+        self.emb_init = (args.gamma + self.eps) / self.hidden_dim
 
-        if model_name == 'TransE' or model_name == 'TransE_l2':
-            self.score_func = TransEScore(gamma, 'l2')
-        elif model_name == 'TransE_l1':
-            self.score_func = TransEScore(gamma, 'l1')
-        elif model_name == 'DistMult':
+        if args.model_name == 'TransE' or args.model_name == 'TransE_l2':
+            self.score_func = TransEScore(args.gamma, 'l2')
+        elif args.model_name == 'TransE_l1':
+            self.score_func = TransEScore(args.gamma, 'l1')
+        elif args.model_name == 'DistMult':
             self.score_func = DistMultScore()
-        elif model_name == 'SimplE':
+        elif args.model_name == 'SimplE':
             self.score_func = SimplEScore()
         else:
-            ValueError('Score function {} not supported'.format(model_name))
+            ValueError('Score function {} not supported'.format(args.model_name))
 
 
     def initialize_parameters(self):

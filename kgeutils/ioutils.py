@@ -354,8 +354,8 @@ class ArgParser(CommonArgParser):
         self.add_argument('--max_steps', type=int, default=-1, help="number of training steps")
         self.add_argument('--warmup_steps', type=int, default=0, help="warm up steps")
         self.add_argument('--gradient_accumulation_steps', type=int, default=1, help="gradient_accumulation_steps")
-
         self.add_argument('--eval_interval_ratio', default=0.1, type=float, help='Evaluation interval ratio')
+        self.add_argument('--check_point_path_or_name', type=str, default=None, help="check point path and name")
 
 
 

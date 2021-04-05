@@ -69,10 +69,7 @@ def train_run():
     ###++++++++++++++++++++++++++++++++++++++++++
     args.n_entities = n_entities
     args.n_relations = n_relations
-    model = ContrastiveKEModel(n_relations=args.n_relations, n_entities=args.n_entities, ent_dim=args.ent_dim, rel_dim=args.rel_dim,
-                               gamma=args.gamma, activation=None, attn_drop=args.attn_drop, feat_drop=args.feat_drop,
-                                          head_num=args.head_num, graph_hidden_dim=args.graph_hid_dim,
-                                          n_layers=args.layers)
+    model = ContrastiveKEModel(args=args)
 
     logging.info('Model Parameter Configuration:')
     for name, param in model.named_parameters():
@@ -120,10 +117,10 @@ def train_run():
         epoch_idx = epoch_idx + 1
         if epoch_idx % 10 == 0:
             torch.save({k: v.cpu() for k, v in model.state_dict().items()},
-                       join(args.exp_name, f'model_{epoch_idx}.pkl'))
+                       join(args.exp_name, f'gc_model_{epoch_idx}.pkl'))
     # print('tid {}'.format(graph.edata['tid'][0]))
     torch.save({k: v.cpu() for k, v in model.state_dict().items()},
-               join(args.exp_name, f'model.pkl'))
+               join(args.exp_name, f'gc_model.pkl'))
     print('Run time {}'.format(time() - start_time))
 
 

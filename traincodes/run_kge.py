@@ -10,6 +10,8 @@ from tqdm import tqdm, trange
 from kgeutils.utils import seed_everything, json_to_argv
 from dglke.dataloader.KGEDataloader import KGETrainDataset, KGETestDataset
 from kgeutils.gpu_utils import device_setting
+from dglke.models.kgemodels import KGEModel
+
 import logging
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -52,6 +54,10 @@ def train_kge_run():
     train_data = KGETrainDataset(dataset=dataset, negative_sample_size=args.neg_sample_size, mode='head-batch')
     test_data = KGETestDataset(dataset=dataset, mode='head-batch')
     ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    kge_model = KGEModel(args=args, model_name=args.model_name, n_entities=dataset.n_entities, n_relations=dataset.n_relations,
+                         hidden_dim=args.graph_hid_dim, gamma=args.gamma)
+    ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 
 if __name__ == '__main__':
     train_kge_run()
