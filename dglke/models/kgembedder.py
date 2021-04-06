@@ -14,6 +14,7 @@ class ExternalEmbedding(nn.Module):
         self.dim = dim
         self.emb = nn.Embedding(num_embeddings=num, embedding_dim=dim)
 
+
     def init(self, emb_init):
         """Initializing the embeddings.
         Parameters

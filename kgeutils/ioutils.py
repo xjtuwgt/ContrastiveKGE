@@ -308,6 +308,9 @@ class ArgParser(CommonArgParser):
     def __init__(self):
         super(ArgParser, self).__init__()
 
+        self.add_argument('--do_train', action='store_true', default=True)
+        self.add_argument('--do_valid', action='store_true', default=True)
+        self.add_argument('--do_test', action='store_true', default=True)
         self.add_argument('--hop_num', type=int, default=2, help='hop_number to generate the sub-graph')
         self.add_argument('--fanouts', default='15,10', type=str,
                           help='fanout, 1-hop number of sample neighbors, 2-hop, 3-hop')
@@ -353,11 +356,13 @@ class ArgParser(CommonArgParser):
         self.add_argument('--weight-decay', type=float, default=5e-4, help="weight decay")
         self.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
         self.add_argument('--num_train_epochs', type=int, default=100, help="number of train epochs")
-        self.add_argument('--max_steps', type=int, default=-1, help="number of training steps")
+        self.add_argument('--max_steps', type=int, default=80000, help="number of training steps")
         self.add_argument('--warmup_steps', type=int, default=0, help="warm up steps")
         self.add_argument('--gradient_accumulation_steps', type=int, default=1, help="gradient_accumulation_steps")
         self.add_argument('--eval_interval_ratio', default=0.1, type=float, help='Evaluation interval ratio')
-        self.add_argument('--check_point_path_or_name', type=str, default=None, help="check point path and name")
+        self.add_argument('--init_checkpoint', type=str, default=None, help="initial check point path and name")
+        self.add_argument('--negative_adversarial_sampling', action='store_true', default=True)
+        self.add_argument('--uni_weight', action='store_true', default=True, help='Otherwise use subsampling weighting like in word2vec')
 
 
 

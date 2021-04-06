@@ -28,7 +28,7 @@ class TransEScore(nn.Module):
         else:  # default use l2
             self.dist_ord = 2
 
-    def score(self, head, tail, relation, mode):
+    def forward(self, head, tail, relation, mode):
         if mode == 'head-batch':
             score = head + (relation - tail)
         else:
@@ -43,7 +43,7 @@ class DistMultScore(nn.Module):
     def __init__(self):
         super(DistMultScore, self).__init__()
 
-    def score(self, head, tail, relation, mode):
+    def forward(self, head, tail, relation, mode):
         if mode == 'head-batch':
             score = head * (relation * tail)
         else:
@@ -58,7 +58,7 @@ class SimplEScore(nn.Module):
     def __init__(self):
         super(SimplEScore, self).__init__()
 
-    def score(self, head, tail, relation, mode):
+    def forward(self, head, tail, relation, mode):
         head_i, head_j = torch.chunk(head, 2, dim=-1)
         tail_i, tail_j = torch.chunk(tail, 2, dim=-1)
         rel, rel_inv = torch.chunk(relation, 2, dim=-1)

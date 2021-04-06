@@ -6,6 +6,7 @@ import numpy as np
 import torch
 
 from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
 
 class KGETrainDataset(Dataset):
     def __init__(self, dataset, negative_sample_size, mode):
@@ -18,13 +19,13 @@ class KGETrainDataset(Dataset):
         self.negative_sample_size = negative_sample_size
         self.count = self.count_frequency(self.triples)
         self.true_head, self.true_tail = self.get_true_head_and_tail(self.triples)
+        self.in_degrees, self.out_degrees = self.get_in_out_degree(self.triples, self.n_entities)
 
     def __len__(self):
         return self.len
 
     def __getitem__(self, idx):
         positive_sample = self.triples[idx]
-
         head, relation, tail = positive_sample
 
         subsampling_weight = self.count[(head, relation)] + self.count[(tail, -relation - 1)]
@@ -114,6 +115,16 @@ class KGETrainDataset(Dataset):
             true_tail[(head, relation)] = np.array(list(set(true_tail[(head, relation)])))
 
         return true_head, true_tail
+
+    @staticmethod
+    def get_in_out_degree(triples, n_entities):
+        in_degrees = np.zeros(n_entities)
+        out_degrees = np.zeros(n_entities)
+        for head, relation, tail in triples:
+            in_degrees[tail] += 1
+            out_degrees[head] += 1
+        return in_degrees, out_degrees
+
 
 class KGETestDataset(Dataset):
     def __init__(self, dataset, mode, type='valid'):
@@ -209,3 +220,40 @@ class BidirectionalOneShotIterator(object):
             for data in dataloader:
                 yield data
 
+
+def train_data_loader(args, dataset):
+    train_dataloader_head = DataLoader(
+        KGETrainDataset(dataset, args.neg_sample_size, 'head-batch'),
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=max(1, args.cpu_num // 2),
+        collate_fn=KGETrainDataset.collate_fn
+    )
+
+    train_dataloader_tail = DataLoader(
+        KGETrainDataset(dataset, args.neg_sample_size, 'tail-batch'),
+        batch_size=args.batch_size,
+        shuffle=True,
+        num_workers=max(1, args.cpu_num // 2),
+        collate_fn=KGETrainDataset.collate_fn
+    )
+
+    train_iterator = BidirectionalOneShotIterator(train_dataloader_head, train_dataloader_tail)
+    return train_iterator
+
+def test_data_loader(args, dataset, type='valid'):
+    test_dataloader_head = DataLoader(
+        KGETestDataset(dataset,'head-batch', type=type),
+        batch_size=args.batch_size_eval,
+        num_workers=max(1, args.cpu_num // 2),
+        collate_fn=KGETestDataset.collate_fn
+    )
+
+    test_dataloader_tail = DataLoader(
+        KGETestDataset(dataset, 'tail-batch', type=type),
+        batch_size=args.batch_size_eval,
+        num_workers=max(1, args.cpu_num // 2),
+        collate_fn=KGETestDataset.collate_fn
+    )
+    test_dataset_list = [test_dataloader_head, test_dataloader_tail]
+    return test_dataset_list

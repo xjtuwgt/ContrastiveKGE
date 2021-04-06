@@ -138,7 +138,6 @@ def SoftRelationPartition(edges, n, has_importance=False, threshold=0.05):
         parts[i] = np.arange(off, off + len(part))
         off += len(part)
     cross_rel_part = np.array(cross_rel_part)
-
     return parts, rel_parts, num_cross_part > 0, cross_rel_part
 
 def BalancedRelationPartition(edges, n, has_importance=False):
