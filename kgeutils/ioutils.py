@@ -262,6 +262,7 @@ class CommonArgParser(argparse.ArgumentParser):
         self.add_argument('--eval_interval', type=int, default=10000,
                           help='Print evaluation results on the validation dataset every x steps'\
                                   'if validation is turned on')
+        self.add_argument('--test_log_steps', type=int, default=100,  help='print test frequency if validation is turned on')
         self.add_argument('--test', action='store_true',
                           help='Evaluate the model on the test set after the model is trained.')
         self.add_argument('--num_proc', type=int, default=1,
@@ -363,6 +364,9 @@ class ArgParser(CommonArgParser):
         self.add_argument('--init_checkpoint', type=str, default=None, help="initial check point path and name")
         self.add_argument('--negative_adversarial_sampling', action='store_true', default=True)
         self.add_argument('--uni_weight', action='store_true', default=True, help='Otherwise use subsampling weighting like in word2vec')
+        self.add_argument('--save_checkpoint_steps', type=int, default=10000, help='save steps')
+
+
 
 
 

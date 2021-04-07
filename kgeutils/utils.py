@@ -5,6 +5,7 @@ import numpy as np
 import torch
 import dgl
 from torch.optim.lr_scheduler import LambdaLR
+import logging
 
 def seed_everything(seed: int) -> int:
     random.seed(seed)
@@ -46,3 +47,11 @@ def get_linear_schedule_with_warmup(optimizer, num_warmup_steps, num_training_st
         )
 
     return LambdaLR(optimizer, lr_lambda, last_epoch)
+
+
+def log_metrics(mode, step, metrics):
+    '''
+    Print the evaluation logs
+    '''
+    for metric in metrics:
+        logging.info('{}\t{}\t{}\t{}'.format(mode, metric, step, metrics[metric]))

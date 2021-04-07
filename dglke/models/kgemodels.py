@@ -79,7 +79,6 @@ class KGEModel(nn.Module):
         Because negative samples and positive samples usually share two elements
         in their triple ((head, relation) or (relation, tail)).
         '''
-
         if mode == 'single':
             head = self.entity_embedding(sample[:,0]).unsqueeze(1)
             relation = self.relation_embedding(sample[:,1]).unsqueeze(1)

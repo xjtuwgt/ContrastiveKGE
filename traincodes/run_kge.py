@@ -13,6 +13,7 @@ from dglke.dataloader.KGEDataloader import train_data_loader, test_data_loader
 from dglke.dataloader.KGCDataloader import KGraphDataset
 from kgeutils.gpu_utils import device_setting
 from dglke.models.kgemodels import KGEModel
+from kgeutils.utils import log_metrics
 
 import logging
 
@@ -110,7 +111,7 @@ def test_step(model, test_dataset_list, args):
 
                 for i in range(batch_size):
                     # Notice that argsort is not ranking
-                    ranking = (argsort[i, :] == positive_arg[i]).nonzero()
+                    ranking = (argsort[i, :] == positive_arg[i]).nonzero(as_tuple=True)[0]
                     assert ranking.size(0) == 1
 
                     # ranking + 1 is the true ranking used in evaluation metrics
@@ -185,8 +186,14 @@ def train_kge_run():
         model.initialize_parameters_with_emb(path=args.init_checkpoint)
     else:
         logging.info('Ramdomly Initializing %s Model...' % args.model_name)
+        model.initialize_parameters()
         init_step = 0
-
+    ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    logging.info('Model Parameter Configuration:')
+    for name, param in model.named_parameters():
+        logging.info('Parameter {}: {}, require_grad = {}'.format(name, str(param.size()), str(param.requires_grad)))
+    logging.info('*' * 75)
+    ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     optimizer = torch.optim.Adam(
         filter(lambda p: p.requires_grad, model.parameters()),
         lr=args.learning_rate
@@ -194,9 +201,21 @@ def train_kge_run():
 
     if args.do_train:
         training_logs = []
-        # Training Loop
         for step in range(init_step, args.max_steps):
             log = train_step(model, optimizer, train_iterator, args)
+            training_logs.append(log)
+
+            if (step + 1) % args.log_interval == 0:
+                metrics = {}
+                for metric in training_logs[0].keys():
+                    metrics[metric] = sum([log[metric] for log in training_logs]) / len(training_logs)
+                log_metrics('Training average', step, metrics)
+                training_logs = []
+
+            if args.do_valid and step % args.eval_interval == 0:
+                logging.info('Evaluating on Valid Dataset...')
+                metrics = test_step(model, test_dataset_list=test_data_list, args=args)
+                log_metrics('Valid', step, metrics)
 
 if __name__ == '__main__':
     train_kge_run()
