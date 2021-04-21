@@ -129,7 +129,7 @@ def train_data_loader(args, dataset):
     n_entities, n_relations = train_graph_data.n_entities, train_graph_data.n_relations
     return data_loader, n_entities, n_relations
 
-def develop_data_loader(args, dataset):
+def inference_data_loader(args, dataset):
     assert args.hop_num > 0
     fanouts = [-1] * args.hop_num
     train_graph_data = KGraphDataset(dataset=dataset, hop_num=args.hop_num, add_special=args.add_special,
