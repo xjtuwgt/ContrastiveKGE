@@ -165,8 +165,15 @@ def infer_run():
     ###++++++++++++++++++++++++++++++++++++++++++
     start_time = time()
     epoch_iterator = tqdm(infer_data_loader, desc="Iteration", miniters=100, disable=args.local_rank not in [-1, 0])
-    for batch_idx, batch in enumerate(epoch_iterator):
-        x = batch['anchor']
+    model.eval()
+    with torch.no_grad():
+        for batch_idx, batch in enumerate(epoch_iterator):
+            for key, value in batch.items():
+                batch[key] = value.to(device)
+            batch_graph = batch['batch_graph']
+            batch_anchors = batch['anchor']
+            print(batch_anchors)
+            cls_embed = model.forward(batch_graph)
         # print(batch['node_number'])
     print('Run time {}'.format(time() - start_time))
 
