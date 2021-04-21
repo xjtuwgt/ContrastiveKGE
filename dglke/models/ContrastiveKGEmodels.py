@@ -93,9 +93,9 @@ class ContrastiveKEModel(nn.Module):
         gain = nn.init.calculate_gain('relu')
         if isinstance(self.rel_map, nn.Linear):
             nn.init.xavier_normal_(self.res_fc_ent.weight, gain=gain)
-        self.relation_emb = self.rel_map.forward(self.relation_emb)
 
     def forward(self, g):
+        self.relation_emb = self.rel_map.forward(self.relation_emb)
         with g.local_scope():
             cls_embed = self.graph_encoder.forward(batch_g=g, ent_embed=self.entity_emb, rel_embed=self.relation_emb)
             return cls_embed
