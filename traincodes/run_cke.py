@@ -167,14 +167,18 @@ def infer_run():
     epoch_iterator = tqdm(infer_data_loader, desc="Iteration", miniters=100)
     model.eval()
     relation_emb_data = model.relation_embed()
-    print(relation_emb_data)
+    entity_emb_data = torch.zeros((args.n_entities, args.graph_hidden_dim))
+    entity_count_initilized_cls = 0
     with torch.no_grad():
         for batch_idx, batch in enumerate(epoch_iterator):
             for key, value in batch.items():
                 batch[key] = value.to(device)
             batch_graph = batch['batch_graph']
             batch_anchors = batch['anchor']
-            print(batch_anchors)
             cls_embed = model.forward(batch_graph)
+            entity_emb_data[batch_anchors] = cls_embed
+            entity_count_initilized_cls += cls_embed.shape[0]
         # print(batch['node_number'])
     print('Run time {}'.format(time() - start_time))
+    print('Relation size = {}'.format(relation_emb_data.shape))
+    print('Entity size = {}'.format(entity_emb_data.shape))
