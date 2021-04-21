@@ -155,6 +155,8 @@ def train_kge_run():
         args.exp_name = os.path.join(args.save_path, args.exp_name)
         os.makedirs(args.exp_name, exist_ok=True)
     ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    args.init_checkpoint = args.save_path
+    ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     dataset = get_dataset(args.data_path,
                           args.dataset,
                           args.format,

@@ -1,5 +1,7 @@
 from torch import nn
 from kgeutils.scoreutils import TransEScore, DistMultScore, SimplEScore
+from kgeutils.ioutils import load_numpy_data
+import torch
 from dglke.models.kgembedder import ExternalEmbedding
 EMB_INIT_EPS = 2.0
 
@@ -41,7 +43,8 @@ class KGEModel(nn.Module):
         self.relation_embedding.init(self.emb_init)
 
     def initialize_parameters_with_emb(self, path):
-
+        self.entity_embedding.emb.copy_(torch.from_numpy(load_numpy_data(path=path, name='entity.npy')))
+        self.relation_embedding.emb.copy_(torch.from_numpy(load_numpy_data(path=path, name='entity.npy')))
         return
 
     def save_emb(self, path, dataset):
