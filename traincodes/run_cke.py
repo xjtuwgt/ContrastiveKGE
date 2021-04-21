@@ -166,6 +166,8 @@ def infer_run():
     start_time = time()
     epoch_iterator = tqdm(infer_data_loader, desc="Iteration", miniters=100)
     model.eval()
+    relation_emb_data = model.relation_embed()
+    print(relation_emb_data)
     with torch.no_grad():
         for batch_idx, batch in enumerate(epoch_iterator):
             for key, value in batch.items():

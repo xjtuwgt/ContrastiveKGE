@@ -4,7 +4,6 @@ import torch
 from torch import Tensor as T
 from dglke.models.kgembedder import ExternalEmbedding
 from dglke.models.GNNmodels import KGELayer
-from dgl.nn.pytorch.utils import Identity
 from pytorch_metric_learning.losses import NTXentLoss
 EMB_INIT_EPS = 2.0
 
@@ -60,8 +59,6 @@ class ContrastiveKEModel(nn.Module):
         super(ContrastiveKEModel, self).__init__()
         self.args = args
         self.entity_emb = ExternalEmbedding(num=args.n_entities, dim=args.ent_dim)
-        self.relation_emb = ExternalEmbedding(num=args.n_relations, dim=args.rel_dim)
-
         self.n_entities = args.n_entities
         self.n_relations = args.n_relations
         self.kg_ent_dim = args.ent_dim
@@ -69,9 +66,9 @@ class ContrastiveKEModel(nn.Module):
         self.graph_hidden_dim = args.graph_hidden_dim
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         if args.graph_hidden_dim != args.rel_dim:
-            self.rel_map = nn.Linear(args.rel_dim, args.graph_hidden_dim, bias=False)
+            self.relation_emb = ExternalEmbedding(num=args.n_relations, dim=args.rel_dim, project_dim=args.graph_hidden_dim)
         else:
-            self.rel_map = Identity()
+            self.relation_emb = ExternalEmbedding(num=args.n_relations, dim=args.rel_dim)
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         self.eps = EMB_INIT_EPS
         self.ent_emb_init = (args.gamma + self.eps) / args.ent_dim
@@ -90,12 +87,8 @@ class ContrastiveKEModel(nn.Module):
         """
         self.entity_emb.init(self.ent_emb_init)
         self.relation_emb.init(self.rel_emb_init)
-        gain = nn.init.calculate_gain('relu')
-        if isinstance(self.rel_map, nn.Linear):
-            nn.init.xavier_normal_(self.res_fc_ent.weight, gain=gain)
 
     def forward(self, g):
-        self.relation_emb = self.rel_map.forward(self.relation_emb)
         with g.local_scope():
             cls_embed = self.graph_encoder.forward(batch_g=g, ent_embed=self.entity_emb, rel_embed=self.relation_emb)
             return cls_embed
@@ -105,8 +98,8 @@ class ContrastiveKEModel(nn.Module):
         return loss
 
     def relation_embed(self):
-        self.relation_emb = self.rel_map.forward(self.relation_emb)
-        return self.relation_emb
+        data = self.relation_emb.embed_all()
+        return data
 
 class GraphContrastiveLoss(nn.Module):
     def __init__(self, temperature: float=0.1):
