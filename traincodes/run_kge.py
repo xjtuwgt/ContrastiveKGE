@@ -58,8 +58,8 @@ def train_step(model, optimizer, train_iterator, args):
     if args.regularization_coef != 0.0:
         # Use L3 regularization for ComplEx and DistMult
         regularization = args.regularization_coef * (
-                model.entity_embedding.emb.weight.norm(p=3) ** 3 +
-                model.relation_embedding.emb.weight.norm(p=3).norm(p=3) ** 3
+                model.entity_embedding.emb.norm(p=3) ** 3 +
+                model.relation_embedding.emb.norm(p=3).norm(p=3) ** 3
         )
         loss = loss + regularization
         regularization_log = {'regularization': regularization.item()}

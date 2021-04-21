@@ -41,6 +41,7 @@ class KGEModel(nn.Module):
         self.relation_embedding.init(self.emb_init)
 
     def initialize_parameters_with_emb(self, path):
+
         return
 
     def save_emb(self, path, dataset):

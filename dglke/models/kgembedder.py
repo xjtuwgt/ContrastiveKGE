@@ -48,6 +48,7 @@ if __name__ == '__main__':
     entitiy_emb.init(emb_init=0.1)
     idx = torch.LongTensor([[1,2,3],[1,2,3]])
     print(entitiy_emb.emb.data.shape)
+    print(entitiy_emb.emb.norm(2))
     # print(entitiy_emb.emb)
 
     # print(entitiy_emb.state_sum)
