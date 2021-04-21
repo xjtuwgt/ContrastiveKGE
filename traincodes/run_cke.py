@@ -11,6 +11,7 @@ from time import time
 from tqdm import tqdm, trange
 from kgeutils.utils import seed_everything, get_linear_schedule_with_warmup, json_to_argv
 from kgeutils.gpu_utils import device_setting
+from kgeutils.ioutils import save_as_numpy, load_numpy_data
 import logging
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -182,3 +183,6 @@ def infer_run():
     print('Run time {}'.format(time() - start_time))
     print('Relation size = {}'.format(relation_emb_data.shape))
     print('Entity size = {} and cls initialized number = {}'.format(entity_emb_data.shape, entity_count_initilized_cls))
+
+    save_as_numpy(np_data=relation_emb_data.cpu().detach().numpy(), path=args.save_path, name='relation.npz')
+    save_as_numpy(np_data=entity_emb_data.cpu().detach().numpy(), path=args.save_path, name='entity.npz')
