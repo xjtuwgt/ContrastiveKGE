@@ -365,9 +365,7 @@ class ArgParser(CommonArgParser):
         self.add_argument('--negative_adversarial_sampling', action='store_true', default=True)
         self.add_argument('--uni_weight', action='store_true', default=True, help='Otherwise use subsampling weighting like in word2vec')
         self.add_argument('--save_checkpoint_steps', type=int, default=10000, help='save steps')
-
-
-
+        self.add_argument('--run_type', type=str, default='graph_contrastive_train') ##
 
 
 def complete_default_train_parser(args):

@@ -43,9 +43,8 @@ class KGEModel(nn.Module):
         self.relation_embedding.init(self.emb_init)
 
     def initialize_parameters_with_emb(self, path):
-        self.entity_embedding.emb.copy_(torch.from_numpy(load_numpy_data(path=path, name='entity.npy')))
-        self.relation_embedding.emb.copy_(torch.from_numpy(load_numpy_data(path=path, name='entity.npy')))
-        return
+        self.entity_embedding.emb.data.copy_(torch.torch.from_numpy(load_numpy_data(path=path, name='entity')))
+        self.relation_embedding.emb.data.copy_(torch.from_numpy(load_numpy_data(path=path, name='relation')))
 
     def save_emb(self, path, dataset):
         """Save the model.
