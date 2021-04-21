@@ -54,4 +54,4 @@ def log_metrics(mode, step, metrics):
     Print the evaluation logs
     '''
     for metric in metrics:
-        logging.info('{}\t{}\t{}\t{}'.format(mode, metric, step, metrics[metric]))
+        logging.info('{}\t{}\t{}\t{:.5f}'.format(mode, metric, step, metrics[metric]))
