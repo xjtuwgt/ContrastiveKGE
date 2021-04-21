@@ -164,7 +164,7 @@ def infer_run():
     model = ContrastiveKEModel(args=args)
     ###++++++++++++++++++++++++++++++++++++++++++
     start_time = time()
-    epoch_iterator = tqdm(infer_data_loader, desc="Iteration", miniters=100, disable=args.local_rank not in [-1, 0])
+    epoch_iterator = tqdm(infer_data_loader, desc="Iteration", miniters=100)
     model.eval()
     with torch.no_grad():
         for batch_idx, batch in enumerate(epoch_iterator):
@@ -176,5 +176,3 @@ def infer_run():
             cls_embed = model.forward(batch_graph)
         # print(batch['node_number'])
     print('Run time {}'.format(time() - start_time))
-
-    model.to(device)
