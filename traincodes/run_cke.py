@@ -156,7 +156,7 @@ def infer_run():
     logging.info('Initial number of relations: {}'.format(dataset.n_relations))
     device = device_setting(args=args)
     ## +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    dev_data_loader, n_entities, n_relations = inference_data_loader(args=args, dataset=dataset)
+    infer_data_loader, n_entities, n_relations = inference_data_loader(args=args, dataset=dataset)
     logging.info('graph based number of entities: {}'.format(n_entities))
     logging.info('graph based number of relations: {}'.format(n_relations))
     args.n_entities = n_entities
@@ -164,11 +164,10 @@ def infer_run():
     model = ContrastiveKEModel(args=args)
     ###++++++++++++++++++++++++++++++++++++++++++
     start_time = time()
-    epoch_iterator = tqdm(dev_data_loader, desc="Iteration", miniters=100, disable=args.local_rank not in [-1, 0])
-
-    # for batch_idx, batch in enumerate(epoch_iterator):
-    #     x = batch['anchor']
-    #     # print(batch['node_number'])
+    epoch_iterator = tqdm(infer_data_loader, desc="Iteration", miniters=100, disable=args.local_rank not in [-1, 0])
+    for batch_idx, batch in enumerate(epoch_iterator):
+        x = batch['anchor']
+        # print(batch['node_number'])
     print('Run time {}'.format(time() - start_time))
 
     model.to(device)
