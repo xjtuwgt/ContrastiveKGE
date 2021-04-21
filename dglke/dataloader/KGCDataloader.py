@@ -142,7 +142,7 @@ def inference_data_loader(args, dataset):
                                               edge_dir=args.edge_dir)
     data_loader = DataLoader(dataset=sub_graph_data, batch_size=args.dev_graph_batch_size,
                              shuffle=False,
-                             drop_last=True,
+                             drop_last=False,
                              collate_fn=SubGraphDataset.collate_fn, num_workers=args.cpu_num)
     n_entities, n_relations = train_graph_data.n_entities, train_graph_data.n_relations
     return data_loader, n_entities, n_relations

@@ -181,4 +181,4 @@ def infer_run():
         # print(batch['node_number'])
     print('Run time {}'.format(time() - start_time))
     print('Relation size = {}'.format(relation_emb_data.shape))
-    print('Entity size = {}'.format(entity_emb_data.shape))
+    print('Entity size = {} and cls initialized number = {}'.format(entity_emb_data.shape, entity_count_initilized_cls))
