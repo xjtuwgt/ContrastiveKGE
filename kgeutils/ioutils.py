@@ -421,12 +421,12 @@ def load_args(args_path):
     return args
 
 def save_as_numpy(np_data, path, name):
-    file_name = os.path.join(path, name+'.npz')
+    file_name = os.path.join(path, name+'.npy')
     np.save(file_name, np_data)
     print('Save {} np data into {}'.format(np_data.shape, file_name))
 
 def load_numpy_data(path, name):
-    file_name = os.path.join(path, name+'.npz')
+    file_name = os.path.join(path, name+'.npy')
     np_data = np.load(file_name)
     print('loading {} np data from {}'.format(np_data.shape, file_name))
     return np_data
