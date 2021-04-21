@@ -246,14 +246,12 @@ def test_data_loader(args, dataset, type='valid'):
         KGETestDataset(dataset,'head-batch', type=type),
         batch_size=args.batch_size_eval,
         num_workers=max(1, args.cpu_num // 2),
-        collate_fn=KGETestDataset.collate_fn
-    )
+        collate_fn=KGETestDataset.collate_fn)
 
     test_dataloader_tail = DataLoader(
         KGETestDataset(dataset, 'tail-batch', type=type),
         batch_size=args.batch_size_eval,
         num_workers=max(1, args.cpu_num // 2),
-        collate_fn=KGETestDataset.collate_fn
-    )
+        collate_fn=KGETestDataset.collate_fn)
     test_dataset_list = [test_dataloader_head, test_dataloader_tail]
     return test_dataset_list
