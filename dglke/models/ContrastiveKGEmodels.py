@@ -105,6 +105,7 @@ class ContrastiveKEModel(nn.Module):
         return loss
 
     def relation_embed(self):
+        self.relation_emb = self.rel_map.forward(self.relation_emb)
         return self.relation_emb
 
 class GraphContrastiveLoss(nn.Module):
