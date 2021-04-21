@@ -227,16 +227,14 @@ def train_data_loader(args, dataset):
         batch_size=args.batch_size,
         shuffle=True,
         num_workers=max(1, args.cpu_num // 2),
-        collate_fn=KGETrainDataset.collate_fn
-    )
+        collate_fn=KGETrainDataset.collate_fn)
 
     train_dataloader_tail = DataLoader(
         KGETrainDataset(dataset, args.neg_sample_size, 'tail-batch'),
         batch_size=args.batch_size,
         shuffle=True,
         num_workers=max(1, args.cpu_num // 2),
-        collate_fn=KGETrainDataset.collate_fn
-    )
+        collate_fn=KGETrainDataset.collate_fn)
 
     train_iterator = BidirectionalOneShotIterator(train_dataloader_head, train_dataloader_tail)
     return train_iterator
