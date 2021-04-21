@@ -184,5 +184,5 @@ def infer_run():
     print('Relation size = {}'.format(relation_emb_data.shape))
     print('Entity size = {} and cls initialized number = {}'.format(entity_emb_data.shape, entity_count_initilized_cls))
 
-    save_as_numpy(np_data=relation_emb_data.cpu().detach().numpy(), path=args.save_path, name='relation.npz')
-    save_as_numpy(np_data=entity_emb_data.cpu().detach().numpy(), path=args.save_path, name='entity.npz')
+    save_as_numpy(np_data=relation_emb_data.cpu().detach().numpy(), path=args.save_path, name='relation')
+    save_as_numpy(np_data=entity_emb_data.cpu().detach().numpy(), path=args.save_path, name='entity')
