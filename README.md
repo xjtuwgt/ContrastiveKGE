@@ -1,5 +1,7 @@
 pytorch-metric-learning 0.9.90
+
 pytorch 1.6.0+
+
 dgl 0.6.0
 
 a) For wordnet:
