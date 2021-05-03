@@ -81,8 +81,8 @@ def sub_graph_extractor(neighbor_dict_pair: tuple, edge_dict_pair: tuple,
         src, etype_id, dst = sub_graph_edges
     coo = sp.sparse.coo_matrix((np.ones(len(src)), (src, dst)), shape=[sub_n_entities, sub_n_entities])
     sub_graph = dgl.from_scipy(coo)  ## 0.6.2 New graph construction
-    sub_graph.edata['tid'] = F.tensor(etype_id, F.int64)
-    sub_graph.ndata['nid'] = torch.LongTensor(sub_graph_nodes)
+    sub_graph.edata['tid'] = F.tensor(etype_id, F.int64) ## tid: map to original edge idx
+    sub_graph.ndata['nid'] = torch.LongTensor(sub_graph_nodes) ## nid: map to original node idx
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     if reverse:
         sg_src, sg_dst = sub_graph.edges()
