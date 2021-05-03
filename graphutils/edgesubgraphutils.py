@@ -1,4 +1,4 @@
-from dgl.sampling import sample_neighbors, randomwalks
+from dgl.sampling import sample_neighbors
 from dgl import DGLHeteroGraph
 from collections import OrderedDict
 import itertools
@@ -102,11 +102,19 @@ def sub_graph_extractor(neighbor_dict_pair: tuple, edge_dict_pair: tuple,
     return sub_graph, cls_id_idx
 
 def dense_graph_constructor(neighbor_dict_pair: tuple, sub_graph, hop_num, special_relation2id: dict, edge_dir: str, reverse=False):
+    """
+    :param neighbor_dict_pair:
+    :param sub_graph: original sub-graph
+    :param hop_num: hop number
+    :param special_relation2id: relation type
+    :param edge_dir: in, out, all
+    :param reverse: adding reverse multi-hop
+    :return: adding multi-hop connections
+    """
     dense_sub_graph = deepcopy(sub_graph)
     in_neighbor_dict, out_neighbor_dict = neighbor_dict_pair
     sub_graph_par_ids = sub_graph.ndata['nid'].tolist()
     par_to_son_map = dict(zip(sub_graph_par_ids, list(range(len(sub_graph_par_ids)))))
-
     if edge_dir == 'in':
         anchor_id = in_neighbor_dict['anchor'][0]
         anchor_sub_id = par_to_son_map[anchor_id.data.item()]
@@ -221,9 +229,11 @@ class SubGraphPairDataset(Dataset):
         anchor_nodes = torch.cat([_[0] for _ in data], dim=0)
         cls_sub_ids = torch.cat([_[1] for _ in data], dim=0)
         anchor_sub_ids = torch.cat([_[2] for _ in data], dim=0)
-        batch_graphs = dgl.batch(list(itertools.chain.from_iterable([(_[3], _[4]) for _ in data])))
+        batch_graphs = dgl.batch(list(itertools.chain.from_iterable([(_[3], _[4]) for _ in data]))) ## batch size * 2
 
         number_of_nodes = torch.LongTensor([sum([_[3].number_of_nodes() for _ in data])])[0]
+        dense_number_of_nodes = torch.LongTensor([sum([_[4].number_of_nodes() for _ in data])])[0]
+        assert number_of_nodes == dense_number_of_nodes
         sparse_number_of_edges = torch.LongTensor([sum([_[3].number_of_edges() for _ in data])])[0]
         dense_number_of_edges = sum([_[4].number_of_edges() for _ in data])
         edge_number = torch.LongTensor([sparse_number_of_edges + dense_number_of_edges])[0]
