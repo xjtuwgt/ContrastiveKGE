@@ -9,11 +9,11 @@ from copy import deepcopy
 
 def direct_sub_graph(anchor_node_ids, cls_node_ids, fanouts, g, edge_dir):
     """
-    :param anchor_node_ids:
+    :param anchor_node_ids: a single node idxes
     :param cls_node_ids:
     :param fanouts: size = hop_number
     :param g:
-    :param edge_dir:
+    :param edge_dir: edge direction: in or out
     :return:
     """
     neighbors_dict = {'anchor': anchor_node_ids}
@@ -27,7 +27,7 @@ def direct_sub_graph(anchor_node_ids, cls_node_ids, fanouts, g, edge_dir):
             node_ids = neighbors_dict['hop_{}'.format(hop - 1)]
         sg = sample_neighbors(g=g, nodes=node_ids, edge_dir=edge_dir, fanout=fanouts[hop - 1])
         sg_src, sg_dst = sg.edges()
-        sg_eids, sg_tids = sg.edata['_ID'], sg.edata['tid']
+        sg_eids, sg_tids = sg.edata['_ID'], sg.edata['tid'] # tid: type ids
         sg_src_list, sg_dst_list = sg_src.tolist(), sg_dst.tolist()
         sg_eid_list, sg_tid_list = sg_eids.tolist(), sg_tids.tolist()
         for eid, src_id, tid, dst_id in zip(sg_eid_list, sg_src_list, sg_tid_list, sg_dst_list):
@@ -43,8 +43,19 @@ def direct_sub_graph(anchor_node_ids, cls_node_ids, fanouts, g, edge_dir):
     return neighbors_dict, edge_dict
 
 def sub_graph_extractor(g: DGLHeteroGraph, neighbor_dict_pair: tuple, edge_dict_pair: tuple,
-                        edge_dir: str, n_relations, cls_id,
+                        edge_dir: str, n_relations: int, cls_id: int,
                         special_relation2id: dict, reverse=False):
+    """
+    :param g: graph
+    :param neighbor_dict_pair: (in neighbors, out neighbors)
+    :param edge_dict_pair: (in edge set, out edge set)
+    :param edge_dir: in or out
+    :param n_relations: number of relations
+    :param cls_id: (cls id)
+    :param special_relation2id: relation to relation ids
+    :param reverse: whether adding reverse edges
+    :return:
+    """
     in_neighbor_dict, out_neighbor_dict = neighbor_dict_pair
     in_edge_dict, out_edge_dict = edge_dict_pair
     if edge_dir == 'in':
@@ -78,7 +89,7 @@ def sub_graph_extractor(g: DGLHeteroGraph, neighbor_dict_pair: tuple, edge_dict_
         sub_graph.add_edges(u=sg_dst, v=sg_src, data={'tid': sub_graph.edata['tid'] + n_relations})
     ## adding cls relation
     cls_id_idx = (sub_graph.ndata['nid'] == cls_id).nonzero(as_tuple=True)[0]
-    assert cls_id_idx == 0
+    assert cls_id_idx == 0 ## the first id in
     node_ids = torch.arange(1, sub_graph.number_of_nodes())
     cls_dst = torch.empty(sub_graph.number_of_nodes() - 1, dtype=torch.long).fill_(cls_id_idx[0])
     cls_rel = torch.empty(sub_graph.number_of_nodes() - 1, dtype=torch.long).fill_(special_relation2id['cls_r'])

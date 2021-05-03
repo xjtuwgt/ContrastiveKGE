@@ -14,7 +14,7 @@ def direct_sub_graph(anchor_node_ids, cls_node_ids, fanouts, g, edge_dir):
     """
     :param anchor_node_ids:
     :param cls_node_ids:
-    :param fanouts: size = hop_number
+    :param fanouts: size = hop_number, list, each element represents the number of sampling neighbors
     :param g:
     :param edge_dir:
     :return:
@@ -89,7 +89,7 @@ def sub_graph_extractor(neighbor_dict_pair: tuple, edge_dict_pair: tuple,
         sub_graph.add_edges(u=sg_dst, v=sg_src, data={'tid': sub_graph.edata['tid'] + n_relations})
     ## adding cls relation
     cls_id_idx = (sub_graph.ndata['nid'] == cls_id).nonzero(as_tuple=True)[0]
-    assert cls_id_idx == 0
+    assert cls_id_idx == 0 and len(cls_id_idx) == 1
     node_ids = torch.arange(1, sub_graph.number_of_nodes())
     cls_dst = torch.empty(sub_graph.number_of_nodes() - 1, dtype=torch.long).fill_(cls_id_idx[0])
     cls_rel = torch.empty(sub_graph.number_of_nodes() - 1, dtype=torch.long).fill_(special_relation2id['cls_r'])
