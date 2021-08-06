@@ -10,18 +10,18 @@ import dgl.backend as F
 import numpy as np
 import scipy as sp
 
-def direct_sub_graph(anchor_node_ids, cls_node_ids, fanouts, g, edge_dir):
+def directed_sub_graph(anchor_node_ids, cls_node_ids, fanouts, g, edge_dir):
     """
     :param anchor_node_ids:
     :param cls_node_ids:
     :param fanouts: size = hop_number, list, each element represents the number of sampling neighbors
-    :param g:
-    :param edge_dir:
+    :param g: graph
+    :param edge_dir: in or out
     :return:
     """
     neighbors_dict = {'anchor': anchor_node_ids}
-    neighbors_dict['cls'] = cls_node_ids
-    edge_dict = {}
+    neighbors_dict['cls'] = cls_node_ids ## connected to all the other nodes for graph-level representation learning
+    edge_dict = {} ## sampled edge dictionary: (head, t_id, tail)
     hop = 1
     while hop < len(fanouts) + 1:
         if hop == 1:
@@ -200,17 +200,17 @@ class SubGraphPairDataset(Dataset):
         anchor_node_ids = torch.LongTensor([idx])
         cls_node_ids = torch.LongTensor([self.special_entity2id['cls']])
         if self.edge_dir == 'in':
-            in_neighbors_dict, in_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
+            in_neighbors_dict, in_edge_dict = directed_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
                                              g=self.g, fanouts=self.fanouts, edge_dir=self.edge_dir)
             out_neighbors_dict, out_edge_dict = None, None
         elif self.edge_dir == 'out':
             in_neighbors_dict, in_edge_dict = None, None
-            out_neighbors_dict, out_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
+            out_neighbors_dict, out_edge_dict = directed_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
                                                g=self.g, fanouts=self.fanouts, edge_dir=self.edge_dir)
         elif self.edge_dir == 'all':
-            in_neighbors_dict, in_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
+            in_neighbors_dict, in_edge_dict = directed_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
                                              g=self.g, fanouts=self.fanouts, edge_dir='in')
-            out_neighbors_dict, out_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
+            out_neighbors_dict, out_edge_dict = directed_sub_graph(anchor_node_ids=anchor_node_ids, cls_node_ids=cls_node_ids,
                                                g=self.g, fanouts=self.fanouts, edge_dir='out')
         else:
             raise 'Edge direction {} is not supported'.format(self.edge_dir)
@@ -271,20 +271,20 @@ class SubGraphDataset(Dataset):
         anchor_node_ids = torch.LongTensor([idx])
         cls_node_ids = torch.LongTensor([self.special_entity2id['cls']])
         if self.edge_dir == 'in':
-            in_neighbors_dict, in_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids,
+            in_neighbors_dict, in_edge_dict = directed_sub_graph(anchor_node_ids=anchor_node_ids,
                                                                cls_node_ids=cls_node_ids,
                                                                g=self.g, fanouts=self.fanouts, edge_dir=self.edge_dir)
             out_neighbors_dict, out_edge_dict = None, None
         elif self.edge_dir == 'out':
             in_neighbors_dict, in_edge_dict = None, None
-            out_neighbors_dict, out_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids,
+            out_neighbors_dict, out_edge_dict = directed_sub_graph(anchor_node_ids=anchor_node_ids,
                                                                  cls_node_ids=cls_node_ids,
                                                                  g=self.g, fanouts=self.fanouts, edge_dir=self.edge_dir)
         elif self.edge_dir == 'all':
-            in_neighbors_dict, in_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids,
+            in_neighbors_dict, in_edge_dict = directed_sub_graph(anchor_node_ids=anchor_node_ids,
                                                                cls_node_ids=cls_node_ids,
                                                                g=self.g, fanouts=self.fanouts, edge_dir='in')
-            out_neighbors_dict, out_edge_dict = direct_sub_graph(anchor_node_ids=anchor_node_ids,
+            out_neighbors_dict, out_edge_dict = directed_sub_graph(anchor_node_ids=anchor_node_ids,
                                                                  cls_node_ids=cls_node_ids,
                                                                  g=self.g, fanouts=self.fanouts, edge_dir='out')
         else:
