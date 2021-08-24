@@ -80,7 +80,7 @@ class ContrastiveKEModel(nn.Module):
         self.graph_encoder = KGEGraphEncoder(num_layers=args.layers, in_ent_dim=args.ent_dim, in_rel_dim=args.rel_dim,
                                            hidden_dim=args.graph_hidden_dim, head_num=args.head_num,
                                            feat_drop=args.feat_drop, attn_drop=args.attn_drop,
-                                           activation=None, negative_slope=args.negative_slope,
+                                           activation=None, negative_slope=args.negative_slope, hop_num=args.hop_num, alpha=args.alpha,
                                            residual=args.residual, diff_head_tail=args.diff_head_tail)
         self.initialize_parameters()
         self.xent_loss = GraphContrastiveLoss(temperature=args.xent_temperature)
