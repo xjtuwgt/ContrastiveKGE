@@ -29,17 +29,22 @@ class KGELayer(nn.Module):
                  in_rel_feats: int,
                  out_ent_feats: int,
                  num_heads: int,
+                 hop_num: int,
+                 alpha: float = 0.15,
                  feat_drop: float=0.1,
                  attn_drop: float=0.1,
                  negative_slope=0.2,
                  residual=True,
                  activation=None,
-                 diff_head_tail=False):
+                 diff_head_tail=False,
+                 ppr_diff=True):
         super(KGELayer, self).__init__()
         self._in_head_ent_feats, self._in_tail_ent_feats = in_ent_feats, in_ent_feats
         self._out_ent_feats = out_ent_feats
         self._in_rel_feats = in_rel_feats
         self._num_heads = num_heads
+        self._hop_num = hop_num
+        self._alpha = alpha
 
         assert self._out_ent_feats % self._num_heads == 0
         self._head_dim = self._out_ent_feats // self._num_heads
@@ -77,6 +82,7 @@ class KGELayer(nn.Module):
         # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         self.reset_parameters()
         self.activation = activation
+        self.ppr_diff = ppr_diff
 
     def reset_parameters(self):
         """
@@ -130,10 +136,15 @@ class KGELayer(nn.Module):
             graph.dstdata.update({'et': et})
             graph.apply_edges(fn.u_add_v('eh', 'et', 'e'))
             e = self.leaky_relu(graph.edata.pop('e') + er)
-            graph.edata['a'] = self.attn_drop(edge_softmax(graph, e))
-            graph.update_all(fn.u_mul_e('ft', 'a', 'm'),
-                             fn.sum('m', 'ft'))
-            rst = graph.dstdata['ft']
+
+            if self.ppr_diff:
+                graph.edata['a'] = edge_softmax(graph, e)
+                rst = self.ppr_estimation(graph=graph)
+            else:
+                graph.edata['a'] = self.attn_drop(edge_softmax(graph, e))
+                graph.update_all(fn.u_mul_e('ft', 'a', 'm'),
+                                 fn.sum('m', 'ft'))
+                rst = graph.dstdata['ft']
             # residual
             if self.res_fc_ent is not None:
                 resval = self.res_fc_ent(feat_tail).view(feat_tail.shape[0], -1, self._head_dim)
@@ -152,3 +163,17 @@ class KGELayer(nn.Module):
                 return rst, graph.edata['a']
             else:
                 return rst
+
+    def ppr_estimation(self, graph):
+        graph = graph.local_var()
+        feat_0 = graph.srcdata.pop('ft')
+        feat = feat_0
+        attentions = graph.edata.pop('a')
+        for _ in range(self._hop_num):
+            graph.srcdata['h'] = feat
+            graph.edata['a_temp'] = self.attn_drop(attentions)
+            graph.update_all(fn.u_mul_e('h', 'a_temp', 'm'), fn.sum('m', 'h'))
+            feat = graph.dstdata.pop('h')
+            feat = (1.0 - self._alpha) * feat + self._alpha * feat_0
+            feat = self.feat_drop(feat)
+        return feat

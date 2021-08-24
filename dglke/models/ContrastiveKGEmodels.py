@@ -8,14 +8,14 @@ from pytorch_metric_learning.losses import NTXentLoss
 EMB_INIT_EPS = 2.0
 
 class KGEGraphEncoder(nn.Module):
-    def __init__(self, num_layers: int, in_ent_dim: int, in_rel_dim: int, hidden_dim: int, head_num: int,
-                feat_drop: float, attn_drop: float, negative_slope=0.2,
+    def __init__(self, num_layers: int, in_ent_dim: int, in_rel_dim: int, hidden_dim: int, head_num: int, hop_num:int,
+                feat_drop: float, attn_drop: float, negative_slope=0.2, alpha=0.1,
                  residual=False, diff_head_tail=False, activation=None):
         super(KGEGraphEncoder, self).__init__()
         self.num_layers = num_layers
-        self.gat_layers = nn.ModuleList()
+        self.gdt_layers = nn.ModuleList()
         self.activation = activation
-        self.gat_layers.append(KGELayer(in_ent_feats=in_ent_dim,
+        self.gdt_layers.append(KGELayer(in_ent_feats=in_ent_dim,
                                         in_rel_feats=in_rel_dim,
                                         out_ent_feats=hidden_dim,
                                         num_heads=head_num,
@@ -24,10 +24,12 @@ class KGEGraphEncoder(nn.Module):
                                         negative_slope=negative_slope,
                                         residual=residual,
                                         activation=activation,
+                                        hop_num=hop_num,
+                                        alpha=alpha,
                                         diff_head_tail=diff_head_tail))
         # hidden layers
         for l in range(1, num_layers):
-            self.gat_layers.append(KGELayer(in_ent_feats=hidden_dim,
+            self.gdt_layers.append(KGELayer(in_ent_feats=hidden_dim,
                                             in_rel_feats=in_rel_dim,
                                             out_ent_feats=hidden_dim,
                                             num_heads=head_num,
@@ -35,6 +37,8 @@ class KGEGraphEncoder(nn.Module):
                                             attn_drop=attn_drop,
                                             activation=activation,
                                             residual=residual,
+                                            hop_num=hop_num,
+                                            alpha=alpha,
                                             negative_slope=negative_slope,
                                             diff_head_tail=diff_head_tail))
 
@@ -47,7 +51,7 @@ class KGEGraphEncoder(nn.Module):
         with batch_g.local_scope():
             h = ent_features
             for l in range(self.num_layers):
-                h = self.gat_layers[l](batch_g, h, rel_features)
+                h = self.gdt_layers[l](batch_g, h, rel_features)
             batch_g.ndata['h'] = h
 
             unbatched_graphs = dgl.unbatch(batch_g)
