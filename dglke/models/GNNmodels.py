@@ -147,7 +147,7 @@ class KGELayer(nn.Module):
                 rst = graph.dstdata['ft']
             # residual
             if self.res_fc_ent is not None:
-                resval = self.res_fc_ent(feat_tail).view(feat_tail.shape[0], -1, self._head_dim)
+                resval = self.res_fc_ent(ent_tail).view(ent_tail.shape[0], -1, self._head_dim)
                 rst = rst + resval
             rst = rst.flatten(1)
             # +++++++++++++++++++++++++++++++++++++++
