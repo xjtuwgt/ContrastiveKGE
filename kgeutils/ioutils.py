@@ -332,6 +332,7 @@ class ArgParser(CommonArgParser):
         self.add_argument('--head_num', type=int, default=4, help='head number of GNNs')
         self.add_argument('--attn_drop', type=float, default=0.25, help='attention dropout for GNN')
         self.add_argument('--feat_drop', type=float, default=0.25, help='feature dropout for GNN')
+        self.add_argument('--alpha', type=float, default=0.15, help='alpha for PPR')
         self.add_argument('--negative_slope', type=float, default=0.4, help='negative slope for elu activation function')
         self.add_argument('--residual', default=True, action='store_true', help='whether adding residual connection')
         self.add_argument('--diff_head_tail', default=True, action='store_true', help='whether distinguish head and tail')

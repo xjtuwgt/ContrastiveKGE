@@ -3,7 +3,7 @@ import dgl
 import torch
 from torch import Tensor as T
 from dglke.models.kgembedder import ExternalEmbedding
-from dglke.models.GNNmodels import KGELayer
+from dglke.models.GNNmodels import RGDTLayer, GDTLayer
 from pytorch_metric_learning.losses import NTXentLoss
 EMB_INIT_EPS = 2.0
 
@@ -15,7 +15,7 @@ class KGEGraphEncoder(nn.Module):
         self.num_layers = num_layers
         self.gdt_layers = nn.ModuleList()
         self.activation = activation
-        self.gdt_layers.append(KGELayer(in_ent_feats=in_ent_dim,
+        self.gdt_layers.append(RGDTLayer(in_ent_feats=in_ent_dim,
                                         in_rel_feats=in_rel_dim,
                                         out_ent_feats=hidden_dim,
                                         num_heads=head_num,
@@ -29,8 +29,7 @@ class KGEGraphEncoder(nn.Module):
                                         diff_head_tail=diff_head_tail))
         # hidden layers
         for l in range(1, num_layers):
-            self.gdt_layers.append(KGELayer(in_ent_feats=hidden_dim,
-                                            in_rel_feats=in_rel_dim,
+            self.gdt_layers.append(GDTLayer(in_ent_feats=hidden_dim,
                                             out_ent_feats=hidden_dim,
                                             num_heads=head_num,
                                             feat_drop=feat_drop,
@@ -51,9 +50,11 @@ class KGEGraphEncoder(nn.Module):
         with batch_g.local_scope():
             h = ent_features
             for l in range(self.num_layers):
-                h = self.gdt_layers[l](batch_g, h, rel_features)
+                if l == 0:
+                    h = self.gdt_layers[l](batch_g, h, rel_features)
+                else:
+                    h = self.gdt_layers[l](batch_g, h)
             batch_g.ndata['h'] = h
-
             unbatched_graphs = dgl.unbatch(batch_g)
             graph_cls_embed = torch.stack([sub_graph.dstdata['h'][0] for sub_graph in unbatched_graphs], dim=0)
             return graph_cls_embed
